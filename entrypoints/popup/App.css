@@ -1,0 +1,10 @@
+/* This file is now mainly for any component-specific styles that can't be handled by TailwindCSS */
+
+/* Ensure proper sizing for the extension popup */
+#root {
+  width: 380px;
+  min-height: 500px;
+  max-height: 600px;
+  display: flex;
+  flex-direction: column;
+}
