@@ -1,192 +1,142 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { Edit, ExternalLink, Trash2, Clock } from "lucide-react";
-import { Button } from "./ui/button";
-import { Badge } from "./ui/badge";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Edit, Trash2, Calendar, Tag, ExternalLink, Clock } from "lucide-react";
 import { Note } from "@/lib/database";
-import { formatDistanceToNow } from "date-fns";
 
 interface NoteCardProps {
   note: Note;
   onEdit: (note: Note) => void;
-  onDelete: (id: string) => void;
-  index?: number;
+  onDelete: (idea_flash_id: string) => void;
 }
 
-export function NoteCard({ note, onEdit, onDelete, index = 0 }: NoteCardProps) {
-  const handleOpenUrl = () => {
-    if (note.url && typeof chrome !== "undefined" && chrome.tabs) {
-      chrome.tabs.create({ url: note.url }).catch((error) => {
-        console.warn("Failed to open URL:", error);
+export function NoteCard({ note, onEdit, onDelete }: NoteCardProps) {
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60);
+
+    if (diffInHours < 1) {
+      return "Just now";
+    } else if (diffInHours < 24) {
+      const hours = Math.floor(diffInHours);
+      return `${hours}h ago`;
+    } else if (diffInHours < 168) {
+      const days = Math.floor(diffInHours / 24);
+      return `${days}d ago`;
+    } else {
+      return date.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
       });
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" || e.key === " ") {
-      e.preventDefault();
-      onEdit(note);
+  const handleDelete = () => {
+    if (window.confirm("Delete this note?")) {
+      onDelete(note.idea_flash_id);
     }
   };
 
   return (
     <motion.div
-      layout
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20, scale: 0.95 }}
-      transition={{
-        duration: 0.2,
-        delay: index * 0.05,
-        type: "spring",
-        stiffness: 100,
-        damping: 15,
-      }}
-      whileHover={{
-        y: -2,
-        scale: 1.01,
-        transition: { duration: 0.2 },
-      }}
-      whileTap={{ scale: 0.98 }}
-      className="group bg-white/90 backdrop-blur-sm rounded-lg border border-gray-200 p-2.5 
-                 hover:shadow-lg hover:shadow-indigo-100/50 hover:border-indigo-200 
-                 transition-all cursor-pointer focus-within:ring-2 focus-within:ring-indigo-400/20
-                 focus-within:border-indigo-400"
-      onClick={() => onEdit(note)}
-      onKeyDown={handleKeyDown}
-      tabIndex={0}
-      role="button"
-      aria-label={`Edit note: ${note.title || "Untitled"}`}
+      exit={{ opacity: 0, y: -20 }}
+      whileHover={{ scale: 1.02 }}
+      className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-all duration-200"
     >
       {/* Header */}
-      <div className="flex items-start justify-between gap-2 mb-1.5">
-        <motion.h3
-          className="font-semibold text-xs text-gray-900 line-clamp-1 flex-1 leading-tight"
-          initial={{ opacity: 0.8 }}
-          animate={{ opacity: 1 }}
-        >
-          {note.title || "Untitled"}
-        </motion.h3>
+      <div className="flex items-start justify-between mb-3">
+        <div className="flex-1 min-w-0">
+          <h3 className="font-semibold text-gray-900 truncate">
+            {note.title || "Untitled"}
+          </h3>
+          <div className="flex items-center gap-2 mt-1 text-xs text-gray-500">
+            <Calendar className="h-3 w-3" />
+            <span>{formatDate(note.created_at)}</span>
+            {note.updated_at !== note.created_at && (
+              <>
+                <Clock className="h-3 w-3" />
+                <span>Updated {formatDate(note.updated_at)}</span>
+              </>
+            )}
+          </div>
+        </div>
 
-        <motion.div
-          className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-          initial={{ scale: 0.8 }}
-          animate={{ scale: 1 }}
-        >
-          <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={(e) => {
-                e.stopPropagation();
-                onEdit(note);
-              }}
-              className="h-6 w-6 p-0 hover:bg-indigo-100 text-indigo-600"
-              aria-label="Edit note"
-            >
-              <Edit className="h-3 w-3" />
-            </Button>
-          </motion.div>
-
-          {note.url && (
-            <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleOpenUrl();
-                }}
-                className="h-6 w-6 p-0 hover:bg-blue-100 text-blue-600"
-                aria-label="Open source URL"
-              >
-                <ExternalLink className="h-3 w-3" />
-              </Button>
-            </motion.div>
-          )}
-
-          <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={(e) => {
-                e.stopPropagation();
-                onDelete(note.id);
-              }}
-              className="h-6 w-6 p-0 hover:bg-red-100 text-red-600"
-              aria-label="Delete note"
-            >
-              <Trash2 className="h-3 w-3" />
-            </Button>
-          </motion.div>
-        </motion.div>
+        {/* Actions */}
+        <div className="flex items-center gap-1 ml-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onEdit(note)}
+            className="h-8 w-8 p-0 text-gray-500 hover:text-blue-600 hover:bg-blue-50"
+            aria-label="Edit"
+          >
+            <Edit className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleDelete}
+            className="h-8 w-8 p-0 text-gray-500 hover:text-red-600 hover:bg-red-50"
+            aria-label="Delete"
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
 
       {/* Content */}
-      <motion.p
-        className="text-xs text-gray-700 line-clamp-2 mb-2 leading-relaxed"
-        initial={{ opacity: 0.9 }}
-        animate={{ opacity: 1 }}
-      >
-        {note.content}
-      </motion.p>
-
-      {/* Footer */}
-      <div className="flex items-center justify-between gap-2">
-        <motion.div
-          className="flex items-center gap-1 text-xs text-gray-500"
-          initial={{ opacity: 0.8 }}
-          animate={{ opacity: 1 }}
-        >
-          <Clock className="h-2.5 w-2.5" />
-          <span className="whitespace-nowrap text-xs">
-            {formatDistanceToNow(new Date(note.created_at), {
-              addSuffix: true,
-            })}
-          </span>
-        </motion.div>
-
-        {note.tags.length > 0 && (
-          <motion.div
-            className="flex gap-1 flex-wrap max-w-[60%]"
-            initial={{ opacity: 0.8, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.1 }}
-          >
-            {note.tags.slice(0, 2).map((tag, i) => (
-              <motion.div
-                key={tag}
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.1 + i * 0.05 }}
-                whileHover={{ scale: 1.05 }}
-              >
-                <Badge
-                  variant="secondary"
-                  className="text-xs px-1 py-0 bg-indigo-100 text-indigo-700 border-0 
-                           hover:bg-indigo-200 transition-colors cursor-default h-4 leading-none"
-                >
-                  #{tag}
-                </Badge>
-              </motion.div>
-            ))}
-            {note.tags.length > 2 && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.2 }}
-              >
-                <Badge
-                  variant="secondary"
-                  className="text-xs px-1 py-0 bg-gray-100 text-gray-600 cursor-default h-4 leading-none"
-                >
-                  +{note.tags.length - 2}
-                </Badge>
-              </motion.div>
-            )}
-          </motion.div>
-        )}
+      <div className="mb-3">
+        <p className="text-gray-700 text-sm leading-relaxed line-clamp-3">
+          {note.content}
+        </p>
       </div>
+
+      {/* Tags */}
+      {note.tags && note.tags.length > 0 && (
+        <div className="flex items-center gap-1 mb-3">
+          <Tag className="h-3 w-3 text-gray-400" />
+          <div className="flex flex-wrap gap-1">
+            {note.tags.slice(0, 3).map((tag) => (
+              <Badge
+                key={tag}
+                variant="secondary"
+                className="text-xs px-1.5 py-0.5 bg-gray-100 text-gray-600"
+              >
+                #{tag}
+              </Badge>
+            ))}
+            {note.tags.length > 3 && (
+              <Badge
+                variant="secondary"
+                className="text-xs px-1.5 py-0.5 bg-gray-100 text-gray-600"
+              >
+                +{note.tags.length - 3}
+              </Badge>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Source link */}
+      {note.url && (
+        <div className="flex items-center gap-1 text-xs text-gray-500">
+          <ExternalLink className="h-3 w-3" />
+          <a
+            href={note.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="truncate hover:text-blue-600"
+            title={note.url}
+          >
+            {new URL(note.url).hostname}
+          </a>
+        </div>
+      )}
     </motion.div>
   );
 }

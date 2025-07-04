@@ -1,14 +1,18 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Search, X, FileText } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
-import { Input } from "./ui/input";
-import { Button } from "./ui/button";
-import { Badge } from "./ui/badge";
-import { NoteEditor } from "./NoteEditor";
-import { NoteCard } from "./NoteCard";
-import { Note } from "@/lib/database";
+import React, { useState, useEffect } from "react";
+import { AnimatePresence } from "framer-motion";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Search, X, Filter } from "lucide-react";
 import { useNotesStore } from "@/lib/store";
+import { Note } from "@/lib/database";
+import { NoteCard } from "./NoteCard";
 
 interface NoteSearchDialogProps {
   isOpen: boolean;
@@ -16,312 +20,214 @@ interface NoteSearchDialogProps {
   onEditNote: (note: Note) => void;
 }
 
+type SortOption = "newest" | "oldest" | "title" | "content";
+type FilterOption = "all" | "recent" | "tagged";
+
 export function NoteSearchDialog({
   isOpen,
   onClose,
   onEditNote,
 }: NoteSearchDialogProps) {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedTag, setSelectedTag] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [sortBy, setSortBy] = useState<"recent" | "title" | "content">(
-    "recent"
-  );
+  const { notes, deleteNote, searchNotes, clearFilters, error } =
+    useNotesStore();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [sortBy, setSortBy] = useState<SortOption>("newest");
+  const [filterBy, setFilterBy] = useState<FilterOption>("all");
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [filteredNotes, setFilteredNotes] = useState<Note[]>([]);
 
-  const { notes, loadNotes, deleteNote } = useNotesStore();
-
+  // Filter and sort notes
   useEffect(() => {
-    if (isOpen) {
-      setIsLoading(true);
-      loadNotes().finally(() => setIsLoading(false));
+    let filtered = [...notes];
+
+    // Apply search filter
+    if (searchTerm.trim()) {
+      const term = searchTerm.toLowerCase();
+      filtered = filtered.filter(
+        (note) =>
+          note.title?.toLowerCase().includes(term) ||
+          note.content.toLowerCase().includes(term)
+      );
     }
-  }, [isOpen, loadNotes]);
 
-  // Reset search when dialog closes
-  useEffect(() => {
-    if (!isOpen) {
-      setSearchQuery("");
-      setSelectedTag(null);
-    }
-  }, [isOpen]);
-
-  const allTags = useMemo(() => {
-    const tagMap = new Map<string, number>();
-    notes.forEach((note) => {
-      note.tags?.forEach((tag) => {
-        tagMap.set(tag, (tagMap.get(tag) || 0) + 1);
-      });
-    });
-    return Array.from(tagMap.entries())
-      .sort(([, countA], [, countB]) => countB - countA)
-      .map(([tag]) => tag);
-  }, [notes]);
-
-  const filteredNotes = useMemo(() => {
-    let filtered = notes.filter((note) => {
-      const matchesSearch =
-        !searchQuery ||
-        note.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        note.content.toLowerCase().includes(searchQuery.toLowerCase());
-
-      const matchesTag = !selectedTag || note.tags?.includes(selectedTag);
-
-      return matchesSearch && matchesTag;
-    });
-
-    // Sort results
-    switch (sortBy) {
-      case "title":
-        filtered.sort((a, b) => a.title.localeCompare(b.title));
-        break;
-      case "content":
-        filtered.sort((a, b) => a.content.length - b.content.length);
-        break;
+    // Apply time filter
+    switch (filterBy) {
       case "recent":
-      default:
+        const oneWeekAgo = new Date();
+        oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+        filtered = filtered.filter(
+          (note) => new Date(note.created_at) > oneWeekAgo
+        );
+        break;
+    }
+
+    // Apply sorting
+    switch (sortBy) {
+      case "newest":
         filtered.sort(
           (a, b) =>
             new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
         );
+        break;
+      case "oldest":
+        filtered.sort(
+          (a, b) =>
+            new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+        );
+        break;
+      case "title":
+        filtered.sort((a, b) => (a.title || "").localeCompare(b.title || ""));
+        break;
+      case "content":
+        filtered.sort((a, b) => a.content.localeCompare(b.content));
+        break;
     }
 
-    return filtered;
-  }, [notes, searchQuery, selectedTag, sortBy]);
+    setFilteredNotes(filtered);
+  }, [notes, searchTerm, sortBy, filterBy, selectedTags]);
 
-  const handleDelete = useCallback(
-    async (id: string) => {
-      if (window.confirm("Delete this idea?")) {
-        try {
-          await deleteNote(id);
-        } catch (error) {
-          console.error("Failed to delete note:", error);
-        }
-      }
-    },
-    [deleteNote]
-  );
+  const handleSearch = (value: string) => {
+    setSearchTerm(value);
+    searchNotes(value);
+  };
 
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      if (e.key === "Escape") {
-        onClose();
-      }
-    },
-    [onClose]
-  );
+  const handleTagToggle = (tag: string) => {
+    setSelectedTags((prev) =>
+      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
+    );
+  };
 
-  const handleSearchInputKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === "Escape") {
-      setSearchQuery("");
+  const handleClearFilters = () => {
+    setSearchTerm("");
+    setSortBy("newest");
+    setFilterBy("all");
+    setSelectedTags([]);
+    clearFilters();
+  };
+
+  const handleDeleteNote = async (idea_flash_id: string) => {
+    try {
+      await deleteNote(idea_flash_id);
+    } catch (error) {
+      // Silent fail
     }
-  }, []);
+  };
+
+  const hasActiveFilters =
+    searchTerm || filterBy !== "all" || selectedTags.length > 0;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent
-        className="max-w-3xl h-[90vh] max-h-[90vh] p-0 bg-gradient-to-br from-white to-indigo-50/30 flex flex-col"
-        onKeyDown={handleKeyDown}
-      >
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="p-3 border-b border-gray-200 flex-shrink-0"
-        >
-          <DialogHeader>
-            <DialogTitle className="text-lg font-bold flex items-center gap-2 text-gray-900 font-display">
-              <FileText className="h-5 w-5 text-indigo-500" />
-              Your Ideas History
-              {filteredNotes.length !== notes.length && (
-                <Badge variant="secondary" className="ml-2 text-xs">
-                  {filteredNotes.length} of {notes.length}
-                </Badge>
-              )}
-            </DialogTitle>
-          </DialogHeader>
+      <DialogContent className="w-full max-w-4xl mx-auto max-h-[90vh] flex flex-col">
+        <DialogHeader className="flex-shrink-0">
+          <DialogTitle className="text-center text-xl font-bold">
+            Search Notes
+          </DialogTitle>
+          <DialogDescription className="text-center text-gray-600">
+            Find and manage your ideas
+          </DialogDescription>
+        </DialogHeader>
 
-          {/* Search and Filter */}
-          <div className="mt-4 space-y-3">
+        <div className="flex flex-col flex-1 min-h-0">
+          {/* Search and filters */}
+          <div className="space-y-4 p-4 border-b flex-shrink-0">
+            {/* Search input */}
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input
-                placeholder="Search your ideas..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={handleSearchInputKeyDown}
-                className="pl-10 pr-10 border-gray-200 focus:border-indigo-400 placeholder:text-gray-400"
-                autoFocus
+                placeholder="Search notes..."
+                value={searchTerm}
+                onChange={(e) => handleSearch(e.target.value)}
+                className="pl-10"
               />
-              {searchQuery && (
+              {searchTerm && (
                 <button
-                  onClick={() => setSearchQuery("")}
+                  onClick={() => handleSearch("")}
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  aria-label="Clear search"
                 >
                   <X className="h-4 w-4" />
                 </button>
               )}
             </div>
 
-            {/* Tags and Sort */}
-            <div className="flex items-center justify-between gap-3">
-              {allTags.length > 0 && (
-                <div className="flex flex-wrap gap-1.5 flex-1">
-                  <Button
-                    variant={selectedTag === null ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setSelectedTag(null)}
-                    className="h-7 text-xs"
-                  >
-                    All
-                  </Button>
-                  {allTags.slice(0, 6).map((tag) => (
-                    <Button
-                      key={tag}
-                      variant={selectedTag === tag ? "default" : "outline"}
-                      size="sm"
-                      onClick={() =>
-                        setSelectedTag(selectedTag === tag ? null : tag)
-                      }
-                      className="h-7 text-xs"
-                    >
-                      #{tag}
-                    </Button>
-                  ))}
-                  {allTags.length > 6 && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="h-7 text-xs opacity-50"
-                      disabled
-                    >
-                      +{allTags.length - 6}
-                    </Button>
-                  )}
-                </div>
-              )}
+            {/* Filters */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <Filter className="h-4 w-4 text-gray-500" />
 
-              {/* Sort Options */}
-              <div className="flex gap-1">
+              {/* Time filter */}
+              <select
+                value={filterBy}
+                onChange={(e) => setFilterBy(e.target.value as FilterOption)}
+                className="text-sm border border-gray-300 rounded px-2 py-1"
+              >
+                <option value="all">All time</option>
+                <option value="recent">Last 7 days</option>
+                <option value="tagged">Tagged only</option>
+              </select>
+
+              {/* Sort */}
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as SortOption)}
+                className="text-sm border border-gray-300 rounded px-2 py-1"
+              >
+                <option value="newest">Newest first</option>
+                <option value="oldest">Oldest first</option>
+                <option value="title">By title</option>
+                <option value="content">By content</option>
+              </select>
+
+              {/* Clear filters */}
+              {hasActiveFilters && (
                 <Button
-                  variant={sortBy === "recent" ? "default" : "outline"}
+                  variant="outline"
                   size="sm"
-                  onClick={() => setSortBy("recent")}
-                  className="h-7 text-xs"
+                  onClick={handleClearFilters}
+                  className="text-xs"
                 >
-                  Recent
+                  Clear
                 </Button>
-                <Button
-                  variant={sortBy === "title" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setSortBy("title")}
-                  className="h-7 text-xs"
-                >
-                  A-Z
-                </Button>
-              </div>
+              )}
             </div>
           </div>
-        </motion.div>
 
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto">
-          {isLoading ? (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="flex items-center justify-center py-16"
-            >
-              <div className="text-center text-gray-500">
-                <motion.div
-                  className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500 mx-auto mb-3"
-                  initial={{ scale: 0.8 }}
-                  animate={{ scale: 1 }}
-                />
-                <p className="text-sm">Loading ideas...</p>
+          {/* Results */}
+          <div className="flex-1 overflow-y-auto p-4 min-h-0">
+            {error && <div className="text-red-600 text-sm mb-4">{error}</div>}
+
+            {filteredNotes.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                <Search className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                <p className="text-lg font-medium">No notes found</p>
+                <p className="text-sm">
+                  {searchTerm
+                    ? "Try adjusting your search terms or filters"
+                    : "Create your first note to get started"}
+                </p>
               </div>
-            </motion.div>
-          ) : filteredNotes.length === 0 ? (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="text-center py-16 px-4 text-gray-500"
-            >
-              {searchQuery || selectedTag ? (
-                <div>
-                  <Search className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">
-                    No ideas found
-                  </h3>
-                  <p className="text-sm">
-                    Try adjusting your search or filters
-                  </p>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      setSearchQuery("");
-                      setSelectedTag(null);
-                    }}
-                    className="mt-4"
-                  >
-                    Clear filters
-                  </Button>
+            ) : (
+              <div className="space-y-4">
+                <div className="text-sm text-gray-500">
+                  {filteredNotes.length} note
+                  {filteredNotes.length !== 1 ? "s" : ""} found
                 </div>
-              ) : (
-                <div>
-                  <FileText className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">
-                    No ideas yet
-                  </h3>
-                  <p className="text-sm">Start capturing your thoughts!</p>
+                <div className="grid gap-4">
+                  <AnimatePresence>
+                    {filteredNotes.map((note) => (
+                      <NoteCard
+                        key={note.idea_flash_id}
+                        note={note}
+                        onEdit={onEditNote}
+                        onDelete={handleDeleteNote}
+                      />
+                    ))}
+                  </AnimatePresence>
                 </div>
-              )}
-            </motion.div>
-          ) : (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="p-2 space-y-1.5"
-            >
-              <AnimatePresence mode="popLayout">
-                {filteredNotes.map((note, index) => (
-                  <NoteCard
-                    key={note.id}
-                    note={note}
-                    index={index}
-                    onEdit={onEditNote}
-                    onDelete={handleDelete}
-                  />
-                ))}
-              </AnimatePresence>
-            </motion.div>
-          )}
-        </div>
-
-        {/* Footer */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="p-2 border-t border-gray-200 bg-gray-50/50 flex items-center justify-between flex-shrink-0"
-        >
-          <div className="text-xs text-gray-500">
-            {filteredNotes.length}{" "}
-            {filteredNotes.length === 1 ? "idea" : "ideas"} found
-            {searchQuery && (
-              <span className="ml-2 font-medium">for "{searchQuery}"</span>
+              </div>
             )}
           </div>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onClose}
-              className="text-xs"
-            >
-              Close
-            </Button>
-          </div>
-        </motion.div>
+        </div>
       </DialogContent>
     </Dialog>
   );
