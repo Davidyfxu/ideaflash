@@ -3,8 +3,8 @@
 /* Ensure proper sizing for the extension popup */
 #root {
   width: 380px;
-  min-height: 500px;
-  max-height: 600px;
+  min-height: 450px;
+  max-height: 550px;
   display: flex;
   flex-direction: column;
 }

@@ -132,7 +132,7 @@ function App() {
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="w-full h-full bg-gradient-to-br from-slate-50 to-indigo-50 flex flex-col"
+      className="flex-1 w-full h-full bg-gradient-to-br from-slate-50 to-indigo-50 flex flex-col"
     >
       {/* Header */}
       <motion.header
