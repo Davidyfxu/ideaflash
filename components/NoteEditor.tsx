@@ -1,10 +1,9 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Save, X, Tag, Plus, Sparkles, AlertCircle } from "lucide-react";
+import { Save, Sparkles, AlertCircle } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Textarea } from "./ui/textarea";
-import { Badge } from "./ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
 import { Note } from "@/lib/database";
 import { useNotesStore } from "@/lib/store";
@@ -18,13 +17,10 @@ interface NoteEditorProps {
 export function NoteEditor({ note, isOpen, onClose }: NoteEditorProps) {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
-  const [tags, setTags] = useState<string[]>([]);
-  const [tagInput, setTagInput] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
-  const [currentUrl, setCurrentUrl] = useState<string>();
   const [errors, setErrors] = useState<{ title?: string; content?: string }>(
-    {}
+    {},
   );
 
   const addNote = useNotesStore((state) => state.addNote);
@@ -35,26 +31,11 @@ export function NoteEditor({ note, isOpen, onClose }: NoteEditorProps) {
     if (note) {
       setTitle(note.title || "");
       setContent(note.content || "");
-      setTags(note.tags || []);
       setHasChanges(false);
     } else {
       setTitle("");
       setContent("");
-      setTags([]);
       setHasChanges(false);
-      // Get current tab URL when creating a new note
-      if (typeof chrome !== "undefined" && chrome.tabs) {
-        chrome.tabs
-          .query({ active: true, currentWindow: true })
-          .then((tabs) => {
-            if (tabs[0]) {
-              setCurrentUrl(tabs[0].url);
-            }
-          })
-          .catch((error) => {
-            console.warn("Failed to get current tab URL:", error);
-          });
-      }
     }
     setErrors({});
   }, [note, isOpen]);
@@ -63,16 +44,12 @@ export function NoteEditor({ note, isOpen, onClose }: NoteEditorProps) {
   useEffect(() => {
     if (note) {
       const hasChange =
-        title !== (note.title || "") ||
-        content !== (note.content || "") ||
-        JSON.stringify(tags) !== JSON.stringify(note.tags || []);
+        title !== (note.title || "") || content !== (note.content || "");
       setHasChanges(hasChange);
     } else {
-      setHasChanges(
-        title.trim() !== "" || content.trim() !== "" || tags.length > 0
-      );
+      setHasChanges(title.trim() !== "" || content.trim() !== "");
     }
-  }, [title, content, tags, note]);
+  }, [title, content, note]);
 
   const validateForm = useCallback(() => {
     const newErrors: { title?: string; content?: string } = {};
@@ -97,14 +74,10 @@ export function NoteEditor({ note, isOpen, onClose }: NoteEditorProps) {
       const noteData = {
         title: title.trim() || content.split("\n")[0].substring(0, 50),
         content: content.trim(),
-        tags,
-        url: note?.url || currentUrl,
       };
 
-      if (note) {
-        await updateNote(note.id, noteData);
-      } else {
-        await addNote(noteData);
+      if (note?.idea_flash_id) {
+        await updateNote(note.idea_flash_id, noteData);
       }
 
       setHasChanges(false);
@@ -115,43 +88,18 @@ export function NoteEditor({ note, isOpen, onClose }: NoteEditorProps) {
     } finally {
       setIsSaving(false);
     }
-  }, [
-    title,
-    content,
-    tags,
-    note,
-    currentUrl,
-    addNote,
-    updateNote,
-    onClose,
-    validateForm,
-  ]);
-
-  const handleAddTag = useCallback(() => {
-    const trimmedTag = tagInput.trim().toLowerCase();
-    if (trimmedTag && !tags.includes(trimmedTag) && tags.length < 10) {
-      setTags([...tags, trimmedTag]);
-      setTagInput("");
-    }
-  }, [tagInput, tags]);
-
-  const handleRemoveTag = useCallback(
-    (tagToRemove: string) => {
-      setTags(tags.filter((tag) => tag !== tagToRemove));
-    },
-    [tags]
-  );
+  }, [title, content, note, addNote, updateNote, onClose, validateForm]);
 
   const handleKeyPress = useCallback(
     (e: React.KeyboardEvent) => {
       if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
-        handleSave();
+        void handleSave();
       } else if (e.key === "Escape") {
         if (hasChanges) {
           if (
             window.confirm(
-              "You have unsaved changes. Are you sure you want to close?"
+              "You have unsaved changes. Are you sure you want to close?",
             )
           ) {
             onClose();
@@ -161,24 +109,13 @@ export function NoteEditor({ note, isOpen, onClose }: NoteEditorProps) {
         }
       }
     },
-    [handleSave, hasChanges, onClose]
+    [handleSave, hasChanges, onClose],
   );
-
-  const handleTagInputKeyPress = useCallback(
-    (e: React.KeyboardEvent) => {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        handleAddTag();
-      }
-    },
-    [handleAddTag]
-  );
-
   const handleClose = useCallback(() => {
     if (hasChanges) {
       if (
         window.confirm(
-          "You have unsaved changes. Are you sure you want to close?"
+          "You have unsaved changes. Are you sure you want to close?",
         )
       ) {
         onClose();
@@ -262,79 +199,6 @@ export function NoteEditor({ note, isOpen, onClose }: NoteEditorProps) {
               <div className="text-xs text-gray-500 mt-1 text-right">
                 {content.length}/5000 characters
               </div>
-            </motion.div>
-
-            {/* Tags */}
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.3 }}
-              className="space-y-3"
-            >
-              <div className="flex items-center gap-2">
-                <Tag className="h-4 w-4 text-indigo-500" />
-                <Input
-                  placeholder="Add tags..."
-                  value={tagInput}
-                  onChange={(e) => setTagInput(e.target.value)}
-                  onKeyPress={handleTagInputKeyPress}
-                  className="flex-1 border-indigo-200 focus:border-indigo-400 focus:ring-indigo-400/20 placeholder:text-gray-400"
-                  disabled={tags.length >= 10}
-                />
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  onClick={handleAddTag}
-                  disabled={!tagInput.trim() || tags.length >= 10}
-                  className="border-indigo-200 hover:bg-indigo-50 hover:border-indigo-300"
-                >
-                  <Plus className="h-3 w-3" />
-                </Button>
-              </div>
-
-              <AnimatePresence>
-                {tags.length > 0 && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: "auto" }}
-                    exit={{ opacity: 0, height: 0 }}
-                    className="flex flex-wrap gap-1.5"
-                  >
-                    {tags.map((tag, index) => (
-                      <motion.div
-                        key={tag}
-                        initial={{ opacity: 0, scale: 0.8 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.8 }}
-                        transition={{ delay: index * 0.05 }}
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                      >
-                        <Badge
-                          variant="secondary"
-                          className="text-xs px-2 py-1 cursor-pointer bg-gradient-to-r from-indigo-100 to-purple-100 text-indigo-700 border-0 hover:from-red-100 hover:to-pink-100 hover:text-red-700 transition-all duration-200"
-                          onClick={() => handleRemoveTag(tag)}
-                        >
-                          #{tag}
-                          <X className="h-3 w-3 ml-1" />
-                        </Badge>
-                      </motion.div>
-                    ))}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
-              {tags.length >= 10 && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="text-xs text-amber-600 flex items-center gap-1"
-                >
-                  <AlertCircle className="h-3 w-3" />
-                  Maximum of 10 tags allowed
-                </motion.div>
-              )}
             </motion.div>
 
             {/* Actions */}

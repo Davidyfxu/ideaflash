@@ -1,29 +1,30 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Save, X, Tag, Plus, Sparkles, History } from "lucide-react";
+import { Save, Sparkles, History, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
 import { NoteSearchDialog } from "@/components/NoteSearchDialog";
 import { NoteEditor } from "@/components/NoteEditor";
+import { AuthDialog } from "@/components/AuthDialog";
+import { UserProfile } from "@/components/UserProfile";
 import { Note } from "@/lib/database";
 import { useNotesStore } from "@/lib/store";
+import { useAuthStore } from "@/lib/auth-store";
 import "./App.css";
 
 function App() {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
-  const [tags, setTags] = useState<string[]>([]);
-  const [tagInput, setTagInput] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [searchDialogOpen, setSearchDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editingNote, setEditingNote] = useState<Note | undefined>();
-  const [currentUrl, setCurrentUrl] = useState<string>();
   const [isInitialized, setIsInitialized] = useState(false);
+  const [authDialogOpen, setAuthDialogOpen] = useState(false);
 
-  const { addNote, deleteNote, loadNotes, loadTags, error } = useNotesStore();
+  const { addNote, deleteNote, loadNotes, error } = useNotesStore();
+  const { isAuthenticated, isApiEnabled } = useAuthStore();
 
   // Initialize the app
   useEffect(() => {
@@ -36,7 +37,7 @@ function App() {
           setIsInitialized(true);
         }, 3000);
 
-        await Promise.all([loadNotes(), loadTags()]);
+        await Promise.all([loadNotes()]);
         clearTimeout(timeoutId);
         setIsInitialized(true);
         console.log("App initialized successfully");
@@ -47,21 +48,7 @@ function App() {
     };
 
     initializeApp();
-
-    // Get current tab URL when app opens
-    if (typeof chrome !== "undefined" && chrome.tabs) {
-      chrome.tabs
-        .query({ active: true, currentWindow: true })
-        .then((tabs) => {
-          if (tabs[0] && tabs[0].url) {
-            setCurrentUrl(tabs[0].url);
-          }
-        })
-        .catch((error) => {
-          console.warn("Failed to get current tab URL:", error);
-        });
-    }
-  }, [loadNotes, loadTags]);
+  }, [loadNotes]);
 
   const handleSave = async () => {
     if (!content.trim()) return;
@@ -71,8 +58,6 @@ function App() {
       const noteData = {
         title: title.trim() || content.split("\n")[0].substring(0, 50),
         content: content.trim(),
-        tags,
-        url: currentUrl,
       };
 
       await addNote(noteData);
@@ -80,8 +65,6 @@ function App() {
       // Clear form after saving
       setTitle("");
       setContent("");
-      setTags([]);
-      setTagInput("");
     } catch (error) {
       console.error("Failed to save note:", error);
     } finally {
@@ -89,28 +72,9 @@ function App() {
     }
   };
 
-  const handleAddTag = () => {
-    const trimmedTag = tagInput.trim().toLowerCase();
-    if (trimmedTag && !tags.includes(trimmedTag)) {
-      setTags([...tags, trimmedTag]);
-      setTagInput("");
-    }
-  };
-
-  const handleRemoveTag = (tagToRemove: string) => {
-    setTags(tags.filter((tag) => tag !== tagToRemove));
-  };
-
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
       handleSave();
-    }
-  };
-
-  const handleTagInputKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      handleAddTag();
     }
   };
 
@@ -187,15 +151,36 @@ function App() {
           <h1 className="text-lg font-bold text-gray-900">IdeaFlash</h1>
         </div>
 
-        <Button
-          onClick={() => setSearchDialogOpen(true)}
-          size="sm"
-          variant="outline"
-          className="gap-1.5 border-indigo-200 hover:bg-indigo-50 hover:border-indigo-300"
-        >
-          <History className="h-4 w-4" />
-          <span>History</span>
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            onClick={() => setSearchDialogOpen(true)}
+            size="sm"
+            variant="outline"
+            className="gap-1.5 border-indigo-200 hover:bg-indigo-50 hover:border-indigo-300"
+          >
+            <History className="h-4 w-4" />
+            <span>History</span>
+          </Button>
+
+          {/* 认证相关UI */}
+          {isApiEnabled && (
+            <>
+              {isAuthenticated ? (
+                <UserProfile showLabel={false} size="sm" />
+              ) : (
+                <Button
+                  onClick={() => setAuthDialogOpen(true)}
+                  size="sm"
+                  variant="outline"
+                  className="gap-1.5 border-indigo-200 hover:bg-indigo-50 hover:border-indigo-300"
+                >
+                  <LogIn className="h-4 w-4" />
+                  <span>登录</span>
+                </Button>
+              )}
+            </>
+          )}
+        </div>
       </motion.header>
 
       {/* Main Note Creation Form */}
@@ -234,63 +219,6 @@ function App() {
             className="min-h-[200px] resize-none border-indigo-200 focus:border-indigo-400 focus:ring-indigo-400/20 leading-relaxed placeholder:text-gray-400"
             autoFocus
           />
-        </motion.div>
-
-        {/* Tags */}
-        <motion.div
-          initial={{ x: -20, opacity: 0 }}
-          animate={{ x: 0, opacity: 1 }}
-          transition={{ delay: 0.4 }}
-          className="space-y-3"
-        >
-          <div className="flex items-center gap-2">
-            <Tag className="h-4 w-4 text-indigo-500" />
-            <Input
-              placeholder="Add tags..."
-              value={tagInput}
-              onChange={(e) => setTagInput(e.target.value)}
-              onKeyPress={handleTagInputKeyPress}
-              className="flex-1 border-indigo-200 focus:border-indigo-400 focus:ring-indigo-400/20 placeholder:text-gray-400"
-            />
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              onClick={handleAddTag}
-              disabled={!tagInput.trim()}
-              className="border-indigo-200 hover:bg-indigo-50 hover:border-indigo-300"
-            >
-              <Plus className="h-3 w-3" />
-            </Button>
-          </div>
-
-          {tags.length > 0 && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="flex flex-wrap gap-1.5"
-            >
-              {tags.map((tag, index) => (
-                <motion.div
-                  key={tag}
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: index * 0.1 }}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <Badge
-                    variant="secondary"
-                    className="text-xs px-2 py-1 cursor-pointer bg-gradient-to-r from-indigo-100 to-purple-100 text-indigo-700 border-0 hover:from-red-100 hover:to-pink-100 hover:text-red-700 transition-all duration-200"
-                    onClick={() => handleRemoveTag(tag)}
-                  >
-                    #{tag}
-                    <X className="h-3 w-3 ml-1" />
-                  </Badge>
-                </motion.div>
-              ))}
-            </motion.div>
-          )}
         </motion.div>
 
         {/* Save Button */}
@@ -340,6 +268,14 @@ function App() {
           setEditingNote(undefined);
         }}
       />
+
+      {/* Auth Dialog */}
+      {isApiEnabled && (
+        <AuthDialog
+          isOpen={authDialogOpen}
+          onClose={() => setAuthDialogOpen(false)}
+        />
+      )}
 
       {error && (
         <motion.div

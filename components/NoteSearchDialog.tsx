@@ -5,7 +5,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
 import { Input } from "./ui/input";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
-import { NoteEditor } from "./NoteEditor";
 import { NoteCard } from "./NoteCard";
 import { Note } from "@/lib/database";
 import { useNotesStore } from "@/lib/store";
@@ -22,10 +21,9 @@ export function NoteSearchDialog({
   onEditNote,
 }: NoteSearchDialogProps) {
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [sortBy, setSortBy] = useState<"recent" | "title" | "content">(
-    "recent"
+    "recent",
   );
 
   const { notes, loadNotes, deleteNote } = useNotesStore();
@@ -41,21 +39,8 @@ export function NoteSearchDialog({
   useEffect(() => {
     if (!isOpen) {
       setSearchQuery("");
-      setSelectedTag(null);
     }
   }, [isOpen]);
-
-  const allTags = useMemo(() => {
-    const tagMap = new Map<string, number>();
-    notes.forEach((note) => {
-      note.tags?.forEach((tag) => {
-        tagMap.set(tag, (tagMap.get(tag) || 0) + 1);
-      });
-    });
-    return Array.from(tagMap.entries())
-      .sort(([, countA], [, countB]) => countB - countA)
-      .map(([tag]) => tag);
-  }, [notes]);
 
   const filteredNotes = useMemo(() => {
     let filtered = notes.filter((note) => {
@@ -64,9 +49,7 @@ export function NoteSearchDialog({
         note.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         note.content.toLowerCase().includes(searchQuery.toLowerCase());
 
-      const matchesTag = !selectedTag || note.tags?.includes(selectedTag);
-
-      return matchesSearch && matchesTag;
+      return matchesSearch;
     });
 
     // Sort results
@@ -81,12 +64,12 @@ export function NoteSearchDialog({
       default:
         filtered.sort(
           (a, b) =>
-            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
         );
     }
 
     return filtered;
-  }, [notes, searchQuery, selectedTag, sortBy]);
+  }, [notes, searchQuery, sortBy]);
 
   const handleDelete = useCallback(
     async (id: string) => {
@@ -98,7 +81,7 @@ export function NoteSearchDialog({
         }
       }
     },
-    [deleteNote]
+    [deleteNote],
   );
 
   const handleKeyDown = useCallback(
@@ -107,7 +90,7 @@ export function NoteSearchDialog({
         onClose();
       }
     },
-    [onClose]
+    [onClose],
   );
 
   const handleSearchInputKeyDown = useCallback((e: React.KeyboardEvent) => {
@@ -162,44 +145,8 @@ export function NoteSearchDialog({
               )}
             </div>
 
-            {/* Tags and Sort */}
+            {/* Sort */}
             <div className="flex items-center justify-between gap-3">
-              {allTags.length > 0 && (
-                <div className="flex flex-wrap gap-1.5 flex-1">
-                  <Button
-                    variant={selectedTag === null ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setSelectedTag(null)}
-                    className="h-7 text-xs"
-                  >
-                    All
-                  </Button>
-                  {allTags.slice(0, 6).map((tag) => (
-                    <Button
-                      key={tag}
-                      variant={selectedTag === tag ? "default" : "outline"}
-                      size="sm"
-                      onClick={() =>
-                        setSelectedTag(selectedTag === tag ? null : tag)
-                      }
-                      className="h-7 text-xs"
-                    >
-                      #{tag}
-                    </Button>
-                  ))}
-                  {allTags.length > 6 && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="h-7 text-xs opacity-50"
-                      disabled
-                    >
-                      +{allTags.length - 6}
-                    </Button>
-                  )}
-                </div>
-              )}
-
               {/* Sort Options */}
               <div className="flex gap-1">
                 <Button
@@ -246,7 +193,7 @@ export function NoteSearchDialog({
               animate={{ opacity: 1, scale: 1 }}
               className="text-center py-16 px-4 text-gray-500"
             >
-              {searchQuery || selectedTag ? (
+              {searchQuery ? (
                 <div>
                   <Search className="h-12 w-12 mx-auto mb-4 text-gray-300" />
                   <h3 className="text-lg font-medium text-gray-900 mb-2">
@@ -260,7 +207,6 @@ export function NoteSearchDialog({
                     size="sm"
                     onClick={() => {
                       setSearchQuery("");
-                      setSelectedTag(null);
                     }}
                     className="mt-4"
                   >
