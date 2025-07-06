@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { api, User, isApiConfigured } from "./api";
+import { database } from "./database";
 
 interface AuthState {
   // 认证状态
@@ -47,6 +48,17 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           isLoading: false,
           error: null,
         });
+
+        // 如果用户已登录，尝试合并数据
+        try {
+          const { useNotesStore } = await import("./store");
+          await useNotesStore.getState().mergeWithApi();
+        } catch (mergeError) {
+          console.error(
+            "Failed to merge data during initialization:",
+            mergeError
+          );
+        }
       } else {
         set({
           user: null,
@@ -78,6 +90,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         isLoading: false,
         error: null,
       });
+
+      // 登录成功后，合并本地和远程数据
+      try {
+        const { useNotesStore } = await import("./store");
+        await useNotesStore.getState().mergeWithApi();
+      } catch (mergeError) {
+        console.error("Failed to merge data after login:", mergeError);
+      }
     } catch (error) {
       console.error("Login failed:", error);
       set({
@@ -101,6 +121,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         isLoading: false,
         error: null,
       });
+
+      // 注册成功后，合并本地和远程数据
+      try {
+        const { useNotesStore } = await import("./store");
+        await useNotesStore.getState().mergeWithApi();
+      } catch (mergeError) {
+        console.error("Failed to merge data after register:", mergeError);
+      }
     } catch (error) {
       console.error("Registration failed:", error);
       set({

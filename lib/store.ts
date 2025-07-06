@@ -14,14 +14,14 @@ interface NotesStore {
   // Actions
   loadNotes: () => Promise<void>;
   addNote: (
-    noteData: Omit<Note, "id" | "created_at" | "updated_at">,
+    noteData: Omit<Note, "id" | "created_at" | "updated_at" | "idea_flash_id">
   ) => Promise<void>;
   updateNote: (idea_flash_id: string, noteData: Partial<Note>) => Promise<void>;
   deleteNote: (idea_flash_id: string) => Promise<void>;
   searchNotes: (term: string) => void;
   clearFilters: () => void;
   clearError: () => void;
-  syncWithApi: () => Promise<void>;
+  mergeWithApi: () => Promise<void>;
 }
 
 export const useNotesStore = create<NotesStore>((set, get) => ({
@@ -106,7 +106,7 @@ export const useNotesStore = create<NotesStore>((set, get) => ({
       const updatedNote = await database.updateNote(idea_flash_id, updates);
       const currentNotes = get().notes;
       const updatedNotes = currentNotes.map((note) =>
-        note.idea_flash_id === idea_flash_id ? updatedNote : note,
+        note.idea_flash_id === idea_flash_id ? updatedNote : note
       );
       set({ notes: updatedNotes, isLoading: false });
       // 如果API可用且用户已认证，异步同步到服务器
@@ -144,7 +144,7 @@ export const useNotesStore = create<NotesStore>((set, get) => ({
       await database.deleteNote(idea_flash_id);
       const currentNotes = get().notes;
       const filteredNotes = currentNotes.filter(
-        (note) => note.idea_flash_id !== idea_flash_id,
+        (note) => note.idea_flash_id !== idea_flash_id
       );
       set({ notes: filteredNotes, isLoading: false });
 
@@ -153,7 +153,7 @@ export const useNotesStore = create<NotesStore>((set, get) => ({
         try {
           // 查找要删除的笔记以获取idea_flash_id
           const noteToDelete = currentNotes.find(
-            (note) => note.idea_flash_id === idea_flash_id,
+            (note) => note.idea_flash_id === idea_flash_id
           );
           const ideaFlashId = noteToDelete?.idea_flash_id || idea_flash_id;
           await api.deletePost(ideaFlashId);
@@ -186,7 +186,7 @@ export const useNotesStore = create<NotesStore>((set, get) => ({
     const filteredNotes = notes.filter(
       (note) =>
         note.title?.toLowerCase().includes(term.toLowerCase()) ||
-        note.content.toLowerCase().includes(term.toLowerCase()),
+        note.content.toLowerCase().includes(term.toLowerCase())
     );
 
     set({ notes: filteredNotes });
@@ -202,13 +202,14 @@ export const useNotesStore = create<NotesStore>((set, get) => ({
     set({ error: null });
   },
 
-  syncWithApi: async () => {
+  // 登录后合并本地和远程数据
+  mergeWithApi: async () => {
     const { isApiEnabled } = get();
-    const { isAuthenticated } = useAuthStore.getState();
+    const { isAuthenticated, user } = useAuthStore.getState();
 
-    if (!isApiEnabled || !isAuthenticated) {
+    if (!isApiEnabled || !isAuthenticated || !user?.id) {
       console.log(
-        "API not configured or user not authenticated, skipping sync",
+        "API not configured or user not authenticated, skipping merge"
       );
       return;
     }
@@ -217,16 +218,15 @@ export const useNotesStore = create<NotesStore>((set, get) => ({
 
     try {
       // 从API获取所有笔记
-      const apiNotes = await api.getPosts();
+      const { data: apiNotes } = await api.getPosts();
       const localNotes = get().notes;
 
-      console.log("Syncing notes with API...");
+      console.log("Merging local and remote notes...");
 
-      // 将API数据转换为本地格式并保存
+      // 1. 处理API笔记：添加到本地（如果不存在）
       for (const apiNote of apiNotes) {
-        // 使用idea_flash_id来匹配笔记
         const existingNote = localNotes.find(
-          (note) => note.idea_flash_id === apiNote.idea_flash_id,
+          (note) => note.idea_flash_id === apiNote.idea_flash_id
         );
 
         if (!existingNote) {
@@ -236,24 +236,97 @@ export const useNotesStore = create<NotesStore>((set, get) => ({
             content: apiNote.content,
             idea_flash_id: apiNote.idea_flash_id,
           });
-        } else if (apiNote.idea_flash_id) {
-          // 更新现有笔记的idea_flash_id
-          await database.updateNote(existingNote.idea_flash_id, {
+        }
+      }
+
+      // 2. 处理本地笔记：检查是否需要上传到API
+      for (const localNote of localNotes) {
+        // 检查是否是匿名笔记（时间戳_anonymous格式）
+        const isAnonymousNote = localNote.idea_flash_id.includes("_anonymous");
+
+        if (isAnonymousNote) {
+          // 生成新的idea_flash_id
+          const newIdeaFlashId = generateIdeaFlashId(user.id);
+
+          try {
+            // 上传到API
+            await api.createPost({
+              title: localNote.title,
+              content: localNote.content,
+              idea_flash_id: newIdeaFlashId,
+            });
+
+            // 删除本地数据库中的匿名笔记
+            await database.deleteNote(localNote.idea_flash_id);
+
+            console.log(
+              `Uploaded and deleted anonymous note: ${localNote.idea_flash_id} -> ${newIdeaFlashId}`
+            );
+          } catch (apiError) {
+            console.error("Failed to upload anonymous note:", apiError);
+          }
+        } else {
+          // 检查本地笔记是否在API中存在
+          const apiNote = apiNotes.find(
+            (note) => note.idea_flash_id === localNote.idea_flash_id
+          );
+
+          if (!apiNote) {
+            // 本地笔记不在API中，上传到API
+            try {
+              await api.createPost({
+                title: localNote.title,
+                content: localNote.content,
+                idea_flash_id: localNote.idea_flash_id,
+              });
+
+              // 删除本地数据库中的笔记
+              await database.deleteNote(localNote.idea_flash_id);
+
+              console.log(
+                `Uploaded and deleted local note: ${localNote.idea_flash_id}`
+              );
+            } catch (apiError) {
+              console.error("Failed to upload local note:", apiError);
+            }
+          }
+        }
+      }
+
+      // 3. 重新请求线上数据，确保本地数据与线上保持一致
+      console.log("Re-fetching online data to ensure consistency...");
+      try {
+        const { data: updatedApiNotes } = await api.getPosts();
+
+        // 清空本地数据库中的所有笔记
+        await database.clearAllNotes();
+
+        // 将最新的线上数据重新加载到本地数据库
+        for (const apiNote of updatedApiNotes) {
+          await database.addNote({
+            title: apiNote.title,
+            content: apiNote.content,
             idea_flash_id: apiNote.idea_flash_id,
           });
         }
+
+        console.log(
+          `Re-loaded ${updatedApiNotes.length} notes from API to local database`
+        );
+      } catch (refetchError) {
+        console.error("Failed to re-fetch online data:", refetchError);
       }
 
       // 重新加载笔记
       await get().loadNotes();
 
       set({ isLoading: false });
-      console.log("Sync completed successfully");
+      console.log("Merge completed successfully");
     } catch (error) {
-      console.error("Sync failed:", error);
+      console.error("Merge failed:", error);
       set({
         isLoading: false,
-        error: `Sync failed: ${
+        error: `Merge failed: ${
           error instanceof Error ? error.message : "Unknown error"
         }`,
       });

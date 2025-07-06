@@ -13,7 +13,7 @@ export default defineConfig({
       "https://*.supabase.co/*",
       "https://accounts.google.com/*",
       "https://oauth2.googleapis.com/*",
-      "https://supa-be.zeabur.app/*"
+      "https://supa-be.zeabur.app/*",
     ],
     commands: {
       "toggle-popup": {

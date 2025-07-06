@@ -20,6 +20,8 @@ import {
   Loader2,
 } from "lucide-react";
 import { useAuthStore } from "@/lib/auth-store";
+import { database } from "@/lib/database";
+import { useNotesStore } from "@/lib/store";
 
 interface UserProfileProps {
   showLabel?: boolean;
@@ -32,11 +34,14 @@ export function UserProfile({
 }: UserProfileProps) {
   const { user, isAuthenticated, logout, isLoading } = useAuthStore();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const { loadNotes } = useNotesStore();
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
     try {
       await logout();
+      await database.clearAllNotes();
+      await loadNotes();
     } catch (error) {
       // Silent fail
     } finally {

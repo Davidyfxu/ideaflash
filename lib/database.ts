@@ -47,7 +47,7 @@ class IndexedDBDatabase {
   private async withTransaction<T>(
     storeNames: string | string[],
     mode: IDBTransactionMode,
-    operation: (stores: IDBObjectStore | IDBObjectStore[]) => Promise<T>,
+    operation: (stores: IDBObjectStore | IDBObjectStore[]) => Promise<T>
   ): Promise<T> {
     const db = await this.initDB();
     const transaction = db.transaction(storeNames, mode);
@@ -74,7 +74,7 @@ class IndexedDBDatabase {
   }
 
   async addNote(
-    note: Omit<Note, "id" | "created_at" | "updated_at">,
+    note: Omit<Note, "id" | "created_at" | "updated_at">
   ): Promise<Note> {
     this.validateNote(note);
 
@@ -98,7 +98,7 @@ class IndexedDBDatabase {
 
   async updateNote(
     idea_flash_id: string,
-    updates: Partial<Omit<Note, "id" | "created_at">>,
+    updates: Partial<Omit<Note, "id" | "created_at">>
   ): Promise<Note> {
     this.validateNote(updates);
 
@@ -159,6 +159,20 @@ class IndexedDBDatabase {
           }
         };
 
+        request.onerror = () => reject(request.error);
+      });
+    });
+  }
+
+  // 清空数据库中的所有笔记
+  async clearAllNotes(): Promise<void> {
+    return this.withTransaction("notes", "readwrite", async (store) => {
+      return new Promise<void>((resolve, reject) => {
+        const request = (store as IDBObjectStore).clear();
+        request.onsuccess = () => {
+          console.log("All notes cleared from database");
+          resolve();
+        };
         request.onerror = () => reject(request.error);
       });
     });

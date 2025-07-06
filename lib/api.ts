@@ -136,8 +136,8 @@ class ApiClient {
   }
 
   // 笔记相关API
-  async getPosts(): Promise<Note[]> {
-    return this.request<Note[]>("/posts");
+  async getPosts(): Promise<{ data: Note[] }> {
+    return this.request<{ data: Note[] }>("/posts");
   }
 
   async createPost(data: {
