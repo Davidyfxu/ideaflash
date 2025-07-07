@@ -37,7 +37,7 @@ export default defineConfig({
     },
     web_accessible_resources: [
       {
-        resources: ["icon/*.svg"],
+        resources: ["icon/*.svg", "idea-flash.svg"],
         matches: ["<all_urls>"],
       },
     ],
