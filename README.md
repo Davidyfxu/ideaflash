@@ -1,6 +1,6 @@
-# IdeaFlash 💡
+# IdeaFlash ⚡
 
-A fast, lightweight Chrome extension for capturing spontaneous ideas and notes with local persistence. Built with modern web technologies for seamless note-taking without disrupting your browsing experience.
+A fast, lightweight Chrome extension for capturing spontaneous ideas and notes with local persistence and optional cloud synchronization. Built with modern web technologies for seamless note-taking without disrupting your browsing experience.
 
 ![IdeaFlash Extension](https://img.shields.io/badge/Chrome%20Extension-Manifest%20V3-blue)
 ![Built with React](https://img.shields.io/badge/Built%20with-React-61dafb)
@@ -11,22 +11,23 @@ A fast, lightweight Chrome extension for capturing spontaneous ideas and notes w
 ### Core Functionality
 
 - **🚀 Quick Note Capture**: Instantly capture ideas from any webpage via the extension popup
-- **💾 Local Persistence**: All notes stored securely on your device using PGlite (PostgreSQL in IndexedDB)
+- **💾 Local Persistence**: All notes stored securely on your device using IndexedDB
+- **☁️ Cloud Sync**: Optional Supabase integration for cross-device synchronization
 - **🔄 Offline Support**: Full functionality without internet connection
 - **⚡ Fast Performance**: Minimal resource consumption and blazing-fast load times
 
 ### Note Management
 
 - **✏️ Edit & Delete**: Full CRUD operations for your notes
-- **🏷️ Tag System**: Organize notes with customizable tags
-- **🔍 Smart Search**: Fast search through notes by title, content, or tags
-- **📱 Clean UI**: Beautiful, responsive interface with modern design
+- **🔍 Smart Search**: Fast search through notes by title and content
+- **📜 History View**: Browse all your saved notes with sorting options
+- **📱 Clean UI**: Beautiful, responsive interface with smooth animations
 
 ### User Experience
 
-- **🌓 Dark/Light Theme**: Toggle between themes to match your preference
+- **🎨 Beautiful UI**: Modern design with Framer Motion animations
 - **⌨️ Keyboard Shortcuts**: Quick access with `Ctrl+Shift+Y` (or `Cmd+Shift+Y` on Mac)
-- **🔗 Source Links**: Automatically capture and link back to the original webpage
+- **🔐 Authentication**: Secure Google OAuth for cloud features
 - **🎯 Minimal Disruption**: Designed to not interfere with your browsing
 
 ## 🛠️ Technology Stack
@@ -34,8 +35,10 @@ A fast, lightweight Chrome extension for capturing spontaneous ideas and notes w
 - **Framework**: [WXT](https://wxt.dev/) for Chrome Extension development
 - **Frontend**: React 19 with TypeScript
 - **Styling**: TailwindCSS + Radix UI components
+- **Animations**: Framer Motion
 - **State Management**: Zustand
-- **Database**: PGlite (PostgreSQL in IndexedDB)
+- **Database**: IndexedDB for local storage
+- **Cloud Backend**: Supabase (optional)
 - **Icons**: Lucide React
 - **Build Tool**: Vite
 
@@ -51,8 +54,8 @@ A fast, lightweight Chrome extension for capturing spontaneous ideas and notes w
 1. **Clone the repository**
 
    ```bash
-   git clone <repository-url>
-   cd ideas-flash
+   git clone https://github.com/yourusername/ideaflash.git
+   cd ideaflash
    ```
 
 2. **Install dependencies**
@@ -84,98 +87,110 @@ pnpm build
 
 # Create extension package
 pnpm zip
+
+# Type checking
+pnpm compile
 ```
 
 ## 🎯 Usage
 
 ### Getting Started
 
-1. Click the IdeaFlash icon in your browser toolbar
-2. Click "New" or use `Ctrl+Shift+Y` to open the note editor
-3. Write your idea and optionally add tags
-4. Press `Ctrl+Enter` (or `Cmd+Enter`) to save
+1. Click the IdeaFlash icon in your browser toolbar or use `Ctrl+Shift+Y`
+2. Enter an optional title for your idea
+3. Write your thoughts in the content area
+4. Press `Ctrl+Enter` (or `Cmd+Enter`) to save quickly
+5. Click "Save Idea" to store your note
 
-### Keyboard Shortcuts
+### Advanced Features
 
-- `Ctrl+Shift+Y` (or `Cmd+Shift+Y`): Open IdeaFlash popup
-- `Ctrl+Enter` (or `Cmd+Enter`): Save note in editor
-- `Esc`: Close note editor
+#### Search & History
+- Click the "History" button to view all your saved notes
+- Use the search bar to find specific notes by title or content
+- Sort notes by date, title, or content
 
-### Features Walkthrough
+#### Cloud Synchronization
+1. Click the "Login" button to authenticate with Google
+2. Your notes will automatically sync across devices
+3. Anonymous notes will be converted to user-specific notes upon login
 
-#### Creating Notes
-
-- Click the "New" button or use the keyboard shortcut
-- Add an optional title (auto-generated from content if empty)
-- Write your note content
-- Add tags for better organization
-- The current webpage URL is automatically captured
-
-#### Managing Notes
-
-- **Edit**: Click the edit icon on any note card
-- **Delete**: Click the trash icon (with confirmation)
-- **Search**: Use the search bar to find notes by content or title
-- **Filter**: Click the filter icon to filter by tags
-
-#### Themes
-
-- Use the sun/moon toggle in the header to switch themes
-- Theme preference is automatically saved
+#### Keyboard Shortcuts
+- `Ctrl+Shift+Y` (Windows/Linux) or `Cmd+Shift+Y` (Mac): Open/close extension
+- `Ctrl+Enter` or `Cmd+Enter`: Quick save while typing
 
 ## 🏗️ Architecture
 
 ### Project Structure
 
 ```
-ideas-flash/
+ideaflash/
 ├── entrypoints/          # Extension entry points
 │   ├── popup/           # Main popup interface
-│   ├── background.ts    # Background script
+│   │   ├── App.tsx      # Main application component
+│   │   └── main.tsx     # Entry point
+│   ├── background.ts    # Background script for shortcuts
 │   └── content.ts       # Content script
 ├── components/          # React components
 │   ├── ui/             # Reusable UI components
-│   ├── NoteCard.tsx    # Individual note display
-│   ├── NoteEditor.tsx  # Note creation/editing
-│   ├── SearchBar.tsx   # Search and filtering
-│   └── Header.tsx      # App header with controls
+│   ├── AuthDialog.tsx   # Authentication modal
+│   ├── NoteCard.tsx     # Individual note display
+│   ├── NoteEditor.tsx   # Note editing interface
+│   ├── NoteSearchDialog.tsx # Search and history
+│   └── UserProfile.tsx  # User profile component
 ├── lib/                # Core utilities
-│   ├── database.ts     # PGlite database layer
-│   ├── store.ts        # Zustand state management
+│   ├── api.ts          # Supabase API integration
+│   ├── auth-store.ts   # Authentication state
+│   ├── database.ts     # IndexedDB wrapper
+│   ├── store.ts        # Main application state
 │   └── utils.ts        # Helper functions
 └── public/             # Static assets
+    └── icon/           # Extension icons
 ```
 
 ### Key Components
 
 #### Database Layer (`lib/database.ts`)
-
-- PGlite integration for local PostgreSQL database
-- Full CRUD operations for notes and tags
+- IndexedDB integration for local storage
+- Full CRUD operations for notes
 - Automatic schema creation and indexing
-- Optimized queries for search and filtering
+- No size limitations unlike Chrome storage
 
 #### State Management (`lib/store.ts`)
-
 - Zustand store for reactive state management
 - Actions for all database operations
-- Theme and UI state management
+- Cloud sync integration
 - Error handling and loading states
 
-#### UI Components (`components/`)
-
-- Modern, accessible components built with Radix UI
-- Consistent styling with TailwindCSS
-- Responsive design for various screen sizes
-- Dark/light theme support
+#### Authentication (`lib/auth-store.ts`)
+- Google OAuth integration
+- Secure token management
+- User profile handling
 
 ## 🔒 Privacy & Security
 
-- **Local Storage Only**: All data stays on your device
-- **No Data Collection**: Zero telemetry or tracking
-- **Secure Storage**: Data encrypted in IndexedDB
-- **No Network Requests**: Fully offline functionality
+- **Local First**: All data stored locally with optional cloud sync
+- **Secure Authentication**: Google OAuth with proper token handling
+- **Data Encryption**: Secure storage in IndexedDB
 - **Minimal Permissions**: Only requires necessary Chrome API access
+- **No Tracking**: Zero telemetry or analytics
+
+## 🌐 Cloud Features (Optional)
+
+### Setup
+1. Create a Supabase project
+2. Configure Google OAuth
+3. Set environment variables:
+   ```env
+   VITE_SUPABASE_URL=your_supabase_url
+   VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+   VITE_GOOGLE_CLIENT_ID=your_google_client_id
+   ```
+
+### Sync Behavior
+- Local-first approach - works offline
+- Background sync when authenticated
+- Automatic conflict resolution
+- Cross-device synchronization
 
 ## 🤝 Contributing
 
@@ -204,14 +219,15 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 🙏 Acknowledgments
 
 - [WXT](https://wxt.dev/) for excellent Chrome extension development framework
-- [PGlite](https://pglite.dev/) for bringing PostgreSQL to the browser
+- [Supabase](https://supabase.com/) for backend-as-a-service platform
 - [Radix UI](https://www.radix-ui.com/) for accessible component primitives
 - [TailwindCSS](https://tailwindcss.com/) for utility-first CSS framework
+- [Framer Motion](https://www.framer.com/motion/) for beautiful animations
 - [Lucide](https://lucide.dev/) for beautiful icons
 
 ## 📧 Support
 
-If you encounter any issues or have questions, please [create an issue](https://github.com/your-username/ideas-flash/issues) on GitHub.
+If you encounter any issues or have questions, please [create an issue](https://github.com/yourusername/ideaflash/issues) on GitHub.
 
 ---
 
