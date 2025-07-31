@@ -9,7 +9,7 @@ export default defineConfig({
     description:
       "A fast, lightweight Chrome extension for capturing spontaneous ideas and notes with local persistence",
     version: "1.0.0",
-    permissions: ["activeTab", "storage", "tabs"],
+    permissions: [],
     commands: {
       "toggle-popup": {
         suggested_key: {
@@ -24,7 +24,7 @@ export default defineConfig({
       default_popup: "popup.html",
     },
     autoIcons: {
-     grayscaleOnDevelopment: false,
+      grayscaleOnDevelopment: false,
       sizes: [16, 32, 48, 96, 128, 192, 256, 512],
       // 保持彩色和保真度的设置
       backgroundColor: "transparent",
@@ -46,11 +46,5 @@ export default defineConfig({
         ],
       },
     },
-    web_accessible_resources: [
-      {
-        resources: ["idea-flash.svg"],
-        matches: ["<all_urls>"],
-      },
-    ],
   },
 });
