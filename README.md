@@ -1,6 +1,6 @@
 # IdeaFlash ⚡
 
-A fast, lightweight Chrome extension for capturing spontaneous ideas and notes with local persistence and optional cloud synchronization. Built with modern web technologies for seamless note-taking without disrupting your browsing experience.
+A fast, lightweight Chrome extension for capturing spontaneous ideas and notes with local persistence. Built with modern web technologies for seamless note-taking without disrupting your browsing experience.
 
 ![IdeaFlash Extension](https://img.shields.io/badge/Chrome%20Extension-Manifest%20V3-blue)
 ![Built with React](https://img.shields.io/badge/Built%20with-React-61dafb)
@@ -12,8 +12,7 @@ A fast, lightweight Chrome extension for capturing spontaneous ideas and notes w
 
 - **🚀 Quick Note Capture**: Instantly capture ideas from any webpage via the extension popup
 - **💾 Local Persistence**: All notes stored securely on your device using IndexedDB
-- **☁️ Cloud Sync**: Optional Supabase integration for cross-device synchronization
-- **🔄 Offline Support**: Full functionality without internet connection
+- **🔄 Offline Support**: Full functionality with local storage
 - **⚡ Fast Performance**: Minimal resource consumption and blazing-fast load times
 
 ### Note Management
@@ -27,7 +26,6 @@ A fast, lightweight Chrome extension for capturing spontaneous ideas and notes w
 
 - **🎨 Beautiful UI**: Modern design with Framer Motion animations
 - **⌨️ Keyboard Shortcuts**: Quick access with `Ctrl+Shift+Y` (or `Cmd+Shift+Y` on Mac)
-- **🔐 Authentication**: Secure Google OAuth for cloud features
 - **🎯 Minimal Disruption**: Designed to not interfere with your browsing
 
 ## 🛠️ Technology Stack
@@ -38,7 +36,6 @@ A fast, lightweight Chrome extension for capturing spontaneous ideas and notes w
 - **Animations**: Framer Motion
 - **State Management**: Zustand
 - **Database**: IndexedDB for local storage
-- **Cloud Backend**: Supabase (optional)
 - **Icons**: Lucide React
 - **Build Tool**: Vite
 
@@ -109,10 +106,7 @@ pnpm compile
 - Use the search bar to find specific notes by title or content
 - Sort notes by date, title, or content
 
-#### Cloud Synchronization
-1. Click the "Login" button to authenticate with Google
-2. Your notes will automatically sync across devices
-3. Anonymous notes will be converted to user-specific notes upon login
+
 
 #### Keyboard Shortcuts
 - `Ctrl+Shift+Y` (Windows/Linux) or `Cmd+Shift+Y` (Mac): Open/close extension
@@ -132,14 +126,13 @@ ideaflash/
 │   └── content.ts       # Content script
 ├── components/          # React components
 │   ├── ui/             # Reusable UI components
-│   ├── AuthDialog.tsx   # Authentication modal
 │   ├── NoteCard.tsx     # Individual note display
 │   ├── NoteEditor.tsx   # Note editing interface
 │   ├── NoteSearchDialog.tsx # Search and history
 │   └── UserProfile.tsx  # User profile component
 ├── lib/                # Core utilities
-│   ├── api.ts          # Supabase API integration
-│   ├── auth-store.ts   # Authentication state
+│   ├── api.ts          # Local API client
+│   ├── auth-store.ts   # User state management
 │   ├── database.ts     # IndexedDB wrapper
 │   ├── store.ts        # Main application state
 │   └── utils.ts        # Helper functions
@@ -158,39 +151,16 @@ ideaflash/
 #### State Management (`lib/store.ts`)
 - Zustand store for reactive state management
 - Actions for all database operations
-- Cloud sync integration
 - Error handling and loading states
-
-#### Authentication (`lib/auth-store.ts`)
-- Google OAuth integration
-- Secure token management
-- User profile handling
 
 ## 🔒 Privacy & Security
 
-- **Local First**: All data stored locally with optional cloud sync
-- **Secure Authentication**: Google OAuth with proper token handling
+- **Local First**: All data stored locally
 - **Data Encryption**: Secure storage in IndexedDB
 - **Minimal Permissions**: Only requires necessary Chrome API access
 - **No Tracking**: Zero telemetry or analytics
 
-## 🌐 Cloud Features (Optional)
 
-### Setup
-1. Create a Supabase project
-2. Configure Google OAuth
-3. Set environment variables:
-   ```env
-   VITE_SUPABASE_URL=your_supabase_url
-   VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
-   VITE_GOOGLE_CLIENT_ID=your_google_client_id
-   ```
-
-### Sync Behavior
-- Local-first approach - works offline
-- Background sync when authenticated
-- Automatic conflict resolution
-- Cross-device synchronization
 
 ## 🤝 Contributing
 
@@ -219,7 +189,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 🙏 Acknowledgments
 
 - [WXT](https://wxt.dev/) for excellent Chrome extension development framework
-- [Supabase](https://supabase.com/) for backend-as-a-service platform
 - [Radix UI](https://www.radix-ui.com/) for accessible component primitives
 - [TailwindCSS](https://tailwindcss.com/) for utility-first CSS framework
 - [Framer Motion](https://www.framer.com/motion/) for beautiful animations

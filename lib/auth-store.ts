@@ -1,7 +1,13 @@
 import { create } from "zustand";
-import { api, User, isApiConfigured } from "./api";
-import { database } from "./database";
 
+interface User {
+  id: string;
+  email?: string;
+  phone?: string;
+  full_name?: string;
+  avatar_url?: string;
+  created_at?: string;
+}
 interface AuthState {
   // 认证状态
   user: User | null;
@@ -12,8 +18,6 @@ interface AuthState {
 
   // Actions
   initializeAuth: () => Promise<void>;
-  login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   clearError: () => void;
   setLoading: (loading: boolean) => void;
@@ -25,131 +29,63 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   isLoading: false,
   isAuthenticated: false,
   error: null,
-  isApiEnabled: isApiConfigured(),
+  isApiEnabled: true, // 本地模式下始终启用
 
   initializeAuth: async () => {
-    const { isApiEnabled } = get();
-
-    if (!isApiEnabled) {
-      console.log("API not configured, running in offline mode");
-      return;
-    }
-
     set({ isLoading: true, error: null });
 
     try {
       // 如果有token，尝试获取用户信息
-      const token = localStorage.getItem("access_token");
-      if (token) {
-        // 这里可以添加一个获取当前用户信息的API端点
-        // 暂时设置为已认证状态
-        set({
-          isAuthenticated: true,
-          isLoading: false,
-          error: null,
-        });
-
-        // 如果用户已登录，尝试合并数据
-        try {
-          const { useNotesStore } = await import("./store");
-          await useNotesStore.getState().mergeWithApi();
-        } catch (mergeError) {
-          console.error(
-            "Failed to merge data during initialization:",
-            mergeError
-          );
+      const userId = localStorage.getItem("access_token");
+      if (userId) {
+        // 从localStorage获取用户信息
+        const usersJson = localStorage.getItem("local_users");
+        if (usersJson) {
+          const users = JSON.parse(usersJson);
+          const user = users.find((u: any) => u.id === userId);
+          
+          if (user) {
+            set({
+              user: {
+                id: user.id,
+                email: user.email,
+                full_name: user.full_name || user.email.split('@')[0],
+              },
+              isAuthenticated: true,
+              isLoading: false,
+              error: null,
+            });
+            return;
+          }
         }
-      } else {
-        set({
-          user: null,
-          isAuthenticated: false,
-          isLoading: false,
-          error: null,
-        });
       }
+      
+      // 如果没有找到有效的用户，清除认证状态
+      set({
+        user: null,
+        isAuthenticated: false,
+        isLoading: false,
+        error: null,
+      });
     } catch (error) {
       console.error("Auth initialization failed:", error);
       set({
         isLoading: false,
-        error: error instanceof Error ? error.message : "Authentication failed",
+        error: error instanceof Error ? error.message : "Operation failed",
         user: null,
         isAuthenticated: false,
       });
     }
   },
 
-  login: async (email: string, password: string) => {
-    set({ isLoading: true, error: null });
 
-    try {
-      const response = await api.login(email, password);
-
-      set({
-        user: response.user,
-        isAuthenticated: true,
-        isLoading: false,
-        error: null,
-      });
-
-      // 登录成功后，合并本地和远程数据
-      try {
-        const { useNotesStore } = await import("./store");
-        await useNotesStore.getState().mergeWithApi();
-      } catch (mergeError) {
-        console.error("Failed to merge data after login:", mergeError);
-      }
-    } catch (error) {
-      console.error("Login failed:", error);
-      set({
-        isLoading: false,
-        error: error instanceof Error ? error.message : "Login failed",
-        user: null,
-        isAuthenticated: false,
-      });
-    }
-  },
-
-  register: async (email: string, password: string) => {
-    set({ isLoading: true, error: null });
-
-    try {
-      const response = await api.register(email, password);
-
-      set({
-        user: response.user,
-        isAuthenticated: true,
-        isLoading: false,
-        error: null,
-      });
-
-      // 注册成功后，合并本地和远程数据
-      try {
-        const { useNotesStore } = await import("./store");
-        await useNotesStore.getState().mergeWithApi();
-      } catch (mergeError) {
-        console.error("Failed to merge data after register:", mergeError);
-      }
-    } catch (error) {
-      console.error("Registration failed:", error);
-      set({
-        isLoading: false,
-        error: error instanceof Error ? error.message : "Registration failed",
-        user: null,
-        isAuthenticated: false,
-      });
-    }
-  },
 
   logout: async () => {
-    const { isApiEnabled } = get();
-
-    set({ isLoading: true });
-
+    set({ isLoading: true, error: null });
     try {
-      if (isApiEnabled) {
-        await api.logout();
-      }
-
+      // 清除访问令牌
+      localStorage.removeItem('access_token');
+      
       set({
         user: null,
         isAuthenticated: false,
@@ -158,7 +94,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       });
     } catch (error) {
       console.error("Logout failed:", error);
-      // 即使API调用失败，也要清除本地状态
       set({
         user: null,
         isAuthenticated: false,

@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Save, Sparkles, History, LogIn } from "lucide-react";
+import { Save, Sparkles, History } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { NoteSearchDialog } from "@/components/NoteSearchDialog";
 import { NoteEditor } from "@/components/NoteEditor";
-import { AuthDialog } from "@/components/AuthDialog";
 import { UserProfile } from "@/components/UserProfile";
 import { Note } from "@/lib/database";
 import { useNotesStore } from "@/lib/store";
@@ -21,10 +20,8 @@ function App() {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editingNote, setEditingNote] = useState<Note | undefined>();
   const [isInitialized, setIsInitialized] = useState(false);
-  const [authDialogOpen, setAuthDialogOpen] = useState(false);
 
   const { addNote, loadNotes, error } = useNotesStore();
-  const { isAuthenticated, isApiEnabled } = useAuthStore();
   // Load notes from the store
   const initializeApp = async () => {
     try {
@@ -152,24 +149,7 @@ function App() {
             <span>History</span>
           </Button>
 
-          {/* 认证相关UI */}
-          {isApiEnabled && (
-            <>
-              {isAuthenticated ? (
-                <UserProfile showLabel={false} size="sm" />
-              ) : (
-                <Button
-                  onClick={() => setAuthDialogOpen(true)}
-                  size="sm"
-                  variant="outline"
-                  className="gap-1.5 border-blue-200 hover:bg-blue-50 hover:border-blue-300"
-                >
-                  <LogIn className="h-4 w-4" />
-                  <span>Login</span>
-                </Button>
-              )}
-            </>
-          )}
+          <UserProfile showLabel={false} size="sm" />
         </div>
       </motion.header>
 
@@ -259,13 +239,7 @@ function App() {
         }}
       />
 
-      {/* Auth Dialog */}
-      {isApiEnabled && (
-        <AuthDialog
-          isOpen={authDialogOpen}
-          onClose={() => setAuthDialogOpen(false)}
-        />
-      )}
+      {/* Auth Dialog 已禁用 */}
 
       {error && (
         <motion.div

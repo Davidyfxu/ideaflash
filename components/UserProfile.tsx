@@ -9,14 +9,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   User,
   LogOut,
   Settings,
-  Mail,
-  Phone,
-  Crown,
   Loader2,
 } from "lucide-react";
 import { useAuthStore } from "@/lib/auth-store";
@@ -32,7 +28,7 @@ export function UserProfile({
   showLabel = true,
   size = "md",
 }: UserProfileProps) {
-  const { user, isAuthenticated, logout, isLoading } = useAuthStore();
+  const { logout } = useAuthStore();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const { loadNotes } = useNotesStore();
 
@@ -48,11 +44,6 @@ export function UserProfile({
       setIsLoggingOut(false);
     }
   };
-
-  // Hide if not authenticated
-  if (!isAuthenticated || !user) {
-    return null;
-  }
 
   const getAvatarSize = () => {
     switch (size) {
@@ -76,9 +67,9 @@ export function UserProfile({
     }
   };
 
-  // Display name fallback
-  const displayName = user.full_name || user.email?.split("@")[0] || "User";
-  const avatarUrl = user.avatar_url;
+  // Default display name for anonymous user
+  const displayName = "Anonymous";
+  const avatarUrl = null;
 
   return (
     <DropdownMenu>
@@ -116,24 +107,6 @@ export function UserProfile({
             <span className="font-medium truncate max-w-[120px]">
               {displayName}
             </span>
-            <Badge variant="outline" className="text-xs">
-              <Crown className="h-3 w-3 mr-1" />
-              Pro
-            </Badge>
-          </div>
-          <div className="text-xs text-gray-500 space-y-1 mt-1">
-            {user.email && (
-              <div className="flex items-center gap-1">
-                <Mail className="h-3 w-3" />
-                <span className="truncate">{user.email}</span>
-              </div>
-            )}
-            {user.phone && (
-              <div className="flex items-center gap-1">
-                <Phone className="h-3 w-3" />
-                <span>{user.phone}</span>
-              </div>
-            )}
           </div>
         </DropdownMenuLabel>
 

@@ -8,13 +8,7 @@ export default defineConfig({
     description:
       "A fast, lightweight Chrome extension for capturing spontaneous ideas and notes with local persistence",
     version: "1.0.0",
-    permissions: ["activeTab", "storage", "tabs", "identity"],
-    host_permissions: [
-      "https://*.supabase.co/*",
-      "https://accounts.google.com/*",
-      "https://oauth2.googleapis.com/*",
-      "https://supa-be.zeabur.app/*",
-    ],
+    permissions: ["activeTab", "storage", "tabs"],
     commands: {
       "toggle-popup": {
         suggested_key: {
