@@ -2,7 +2,8 @@ import { defineConfig } from "wxt";
 
 // See https://wxt.dev/api/config.html
 export default defineConfig({
-  modules: ["@wxt-dev/module-react"],
+  modules: ["@wxt-dev/module-react", "@wxt-dev/auto-icons"],
+
   manifest: {
     name: "IdeaFlash",
     description:
@@ -22,16 +23,32 @@ export default defineConfig({
       default_title: "IdeaFlash - Quick Note Taking",
       default_popup: "popup.html",
     },
-    icons: {
-      "16": "/icon/16.svg",
-      "32": "/icon/32.svg",
-      "48": "/icon/48.svg",
-      "96": "/icon/96.svg",
-      "128": "/icon/128.svg",
+    autoIcons: {
+     grayscaleOnDevelopment: false,
+      sizes: [16, 32, 48, 96, 128, 192, 256, 512],
+      // 保持彩色和保真度的设置
+      backgroundColor: "transparent",
+      padding: 0,
+      // 确保SVG渲染质量
+      svgOptions: {
+        multipass: true,
+        plugins: [
+          {
+            name: "preset-default",
+            params: {
+              overrides: {
+                removeViewBox: false,
+                removeTitle: false,
+                removeDesc: false,
+              },
+            },
+          },
+        ],
+      },
     },
     web_accessible_resources: [
       {
-        resources: ["icon/*.svg", "idea-flash.svg"],
+        resources: ["idea-flash.svg"],
         matches: ["<all_urls>"],
       },
     ],
