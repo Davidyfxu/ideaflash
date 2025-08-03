@@ -24,10 +24,8 @@ function App() {
   // Load notes from the store
   const initializeApp = async () => {
     try {
-      console.log("Starting app initialization...");
       await Promise.all([loadNotes()]);
       setIsInitialized(true);
-      console.log("App initialized successfully");
     } catch (error) {
       console.error("Failed to initialize app:", error);
       setIsInitialized(true);

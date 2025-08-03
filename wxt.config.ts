@@ -8,7 +8,7 @@ export default defineConfig({
     name: "IdeaFlash",
     description:
       "A fast, lightweight Chrome extension for capturing spontaneous ideas and notes with local persistence",
-    version: "1.0.0",
+    version: "1.0.1",
     permissions: [],
     commands: {
       "toggle-popup": {
