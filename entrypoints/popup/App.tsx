@@ -152,7 +152,7 @@ function App() {
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-50 to-green-50"
+        className="w-full h-full flex items-center justify-center bg-background"
       >
         <motion.div
           initial={{ scale: 0.8, opacity: 0 }}
@@ -165,13 +165,13 @@ function App() {
             transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
             className="relative"
           >
-            <Sparkles className="h-8 w-8 text-blue-500" />
+            <Sparkles className="h-8 w-8 text-primary" />
           </motion.div>
           <motion.p
             initial={{ y: 10, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.5 }}
-            className="text-sm text-blue-700 text-center font-medium"
+            className="text-sm text-foreground text-center font-medium"
           >
             Initializing IdeaFlash...
           </motion.p>
@@ -184,7 +184,7 @@ function App() {
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="flex-1 w-full h-full bg-gradient-to-br from-blue-50 to-green-50 flex flex-col relative"
+      className="flex-1 w-full h-full bg-background flex flex-col relative"
     >
       {/* Success Animation */}
       <AnimatePresence>
@@ -210,7 +210,7 @@ function App() {
                 damping: 15,
                 delay: 0.1,
               }}
-              className="bg-white rounded-full p-4 shadow-2xl border-2 border-green-200"
+              className="bg-popover rounded-full p-4 shadow-2xl border-2 border-border"
             >
               <motion.div
                 animate={{
@@ -222,7 +222,7 @@ function App() {
                   times: [0, 0.3, 0.6, 1],
                 }}
               >
-                <CheckCircle className="h-12 w-12 text-green-500" />
+                <CheckCircle className="h-12 w-12 text-secondary" />
               </motion.div>
             </motion.div>
 
@@ -242,7 +242,7 @@ function App() {
                     repeatType: "reverse",
                   },
                 }}
-                className="text-green-700 font-semibold text-lg bg-white/90 backdrop-blur-sm px-4 py-2 rounded-full shadow-lg"
+                className="text-primary font-semibold text-lg bg-popover/90 backdrop-blur-sm px-4 py-2 rounded-full shadow-lg"
               >
                 Saved!
               </motion.p>
@@ -255,7 +255,7 @@ function App() {
       <motion.header
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        className="flex items-center justify-between p-3 bg-white/80 backdrop-blur-sm border-b border-blue-100"
+        className="flex items-center justify-between p-3 bg-white/95 backdrop-blur-sm border-b border-primary/20"
       >
         <div className="flex items-center gap-2">
           <motion.div
@@ -269,17 +269,17 @@ function App() {
                 duration: 0.5,
               },
             }}
-            className="flex items-center justify-center w-7 h-7 bg-gradient-to-br from-blue-500 to-green-500 rounded-lg shadow-sm"
+            className="flex items-center justify-center w-7 h-7 gradient-primary rounded-lg shadow-md"
           >
-            <Sparkles className="h-4 w-4 text-white" />
+            <Sparkles className="h-4 w-4 text-primary-foreground" />
           </motion.div>
-          <h1 className="text-lg font-bold text-gray-900">IdeaFlash</h1>
+          <h1 className="text-lg font-bold text-foreground">IdeaFlash</h1>
           {draftSaving && (
             <motion.div
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.8 }}
-              className="flex items-center gap-1 text-xs text-blue-500 bg-blue-50 px-2 py-1 rounded-full"
+              className="flex items-center gap-1 text-xs text-primary bg-primary/10 border border-primary/30 px-2 py-1 rounded-full"
             >
               <Cloud className="h-3 w-3 animate-pulse" />
               <span>Auto-saving</span>
@@ -292,7 +292,7 @@ function App() {
             onClick={() => setSearchDialogOpen(true)}
             size="sm"
             variant="outline"
-            className="border-blue-200 hover:bg-blue-50 hover:border-blue-300 p-2"
+            className="border-border hover:bg-accent hover:border-ring p-2"
             aria-label="View History"
           >
             <History className="h-4 w-4" />
@@ -318,7 +318,7 @@ function App() {
             placeholder="Title (optional)"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="font-medium border-blue-200 focus:border-blue-400 focus:ring-blue-400/20 placeholder:text-gray-400"
+            className="font-medium border-border focus:border-ring focus:ring-ring/20 placeholder:text-muted-foreground"
           />
         </motion.div>
 
@@ -333,7 +333,7 @@ function App() {
             placeholder="Write your thoughts..."
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            className="min-h-[200px] resize-none border-blue-200 focus:border-blue-400 focus:ring-blue-400/20 leading-relaxed placeholder:text-gray-400"
+            className="min-h-[200px] resize-none border-border focus:border-ring focus:ring-ring/20 leading-relaxed placeholder:text-muted-foreground"
             autoFocus
           />
         </motion.div>
@@ -343,7 +343,6 @@ function App() {
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.5 }}
-          className="pt-2"
         >
           <motion.div
             whileHover={{ scale: 1.02 }}
@@ -354,7 +353,7 @@ function App() {
             <Button
               onClick={handleSave}
               disabled={!content.trim() || isSaving}
-              className="w-full bg-gradient-to-r from-blue-500 to-green-500 hover:from-blue-600 hover:to-green-600 shadow-sm text-white"
+              className="w-full gradient-primary hover:opacity-90 shadow-lg hover:shadow-xl text-white transition-all duration-300 transform hover:scale-[1.02]"
               size="lg"
             >
               <Save className="h-4 w-4 mr-2" />
@@ -368,28 +367,28 @@ function App() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.6 }}
-          className="text-xs text-gray-500 text-center bg-gradient-to-r from-blue-50/50 to-green-50/50 p-3 rounded-xl border border-blue-100/50 space-y-2"
+          className="text-xs text-muted-foreground text-center bg-muted/50 p-3 rounded-xl border border-border/50"
         >
           <div className="flex items-center justify-center gap-2">
-            <kbd className="px-2 py-1 bg-white rounded-md shadow-sm text-xs font-mono border">
+            <kbd className="px-2 py-1 bg-popover rounded-md shadow-sm text-xs font-mono border border-border">
               Ctrl
             </kbd>
             <span>+</span>
-            <kbd className="px-2 py-1 bg-white rounded-md shadow-sm text-xs font-mono border">
+            <kbd className="px-2 py-1 bg-popover rounded-md shadow-sm text-xs font-mono border border-border">
               Enter
             </kbd>
             <span className="ml-2">to save</span>
           </div>
-          <div className="flex items-center justify-center gap-2 text-gray-400">
-            <kbd className="px-2 py-1 bg-white rounded-md shadow-sm text-xs font-mono border">
+          <div className="flex items-center justify-center gap-2 text-muted-foreground">
+            <kbd className="px-2 py-1 bg-popover rounded-md shadow-sm text-xs font-mono border border-border">
               Ctrl
             </kbd>
             <span>+</span>
-            <kbd className="px-2 py-1 bg-white rounded-md shadow-sm text-xs font-mono border">
+            <kbd className="px-2 py-1 bg-popover rounded-md shadow-sm text-xs font-mono border border-border">
               Shift
             </kbd>
             <span>+</span>
-            <kbd className="px-2 py-1 bg-white rounded-md shadow-sm text-xs font-mono border">
+            <kbd className="px-2 py-1 bg-popover rounded-md shadow-sm text-xs font-mono border border-border">
               I
             </kbd>
             <span className="ml-2">to toggle</span>

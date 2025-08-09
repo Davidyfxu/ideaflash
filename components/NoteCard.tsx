@@ -44,17 +44,20 @@ export function NoteCard({ note, onEdit, onDelete }: NoteCardProps) {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
       whileHover={{ scale: 1.01 }}
-      className="bg-white rounded-xl border border-gray-200 p-4 hover:shadow-md transition-all duration-200 hover:border-blue-300"
+      className="bg-popover rounded-xl border border-border p-4 hover:shadow-lg transition-all duration-300 hover:border-primary/50 hover:shadow-primary/20 relative overflow-hidden backdrop-blur-sm"
     >
+      {/* Aqua Dream subtle gradient accent */}
+      <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-primary/5 via-transparent to-secondary/5 pointer-events-none"></div>
+
       {/* Header */}
-      <div className="flex items-start justify-between mb-2">
+      <div className="flex items-start justify-between mb-2 relative z-10">
         <div className="flex-1 min-w-0">
           {note.title && (
-            <h3 className="font-medium text-gray-900 truncate text-sm mb-1">
+            <h3 className="font-medium text-foreground truncate text-sm mb-1">
               {note.title}
             </h3>
           )}
-          <div className="flex items-center gap-1 text-xs text-gray-500">
+          <div className="flex items-center gap-1 text-xs text-muted-foreground">
             <Calendar className="h-3 w-3" />
             <span>{formatDate(note.created_at)}</span>
           </div>
@@ -66,7 +69,7 @@ export function NoteCard({ note, onEdit, onDelete }: NoteCardProps) {
             variant="ghost"
             size="sm"
             onClick={() => onEdit(note)}
-            className="h-6 w-6 p-0 text-gray-500 hover:text-blue-600 hover:bg-blue-50"
+            className="h-6 w-6 p-0 text-muted-foreground hover:text-primary hover:bg-accent"
             aria-label="Edit"
           >
             <Edit className="h-3 w-3" />
@@ -75,7 +78,7 @@ export function NoteCard({ note, onEdit, onDelete }: NoteCardProps) {
             variant="ghost"
             size="sm"
             onClick={handleDelete}
-            className="h-6 w-6 p-0 text-gray-500 hover:text-red-600 hover:bg-red-50"
+            className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
             aria-label="Delete"
           >
             <Trash2 className="h-3 w-3" />
@@ -84,8 +87,8 @@ export function NoteCard({ note, onEdit, onDelete }: NoteCardProps) {
       </div>
 
       {/* Content */}
-      <div className="mb-2">
-        <p className="text-gray-700 text-xs leading-relaxed line-clamp-2">
+      <div className="mb-2 relative z-10">
+        <p className="text-foreground text-xs leading-relaxed line-clamp-2">
           {note.content}
         </p>
       </div>

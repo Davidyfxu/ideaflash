@@ -68,10 +68,10 @@ export function NoteEditor({ note, isOpen, onClose }: NoteEditorProps) {
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm"
       onKeyDown={handleKeyPress}
     >
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-lg p-6 relative">
+      <div className="bg-popover rounded-xl shadow-xl w-full max-w-lg p-6 relative">
         {/* Close button */}
         <button
-          className="absolute top-3 right-3 text-gray-400 hover:text-gray-600"
+          className="absolute top-3 right-3 text-muted-foreground hover:text-foreground"
           onClick={onClose}
           aria-label="Close"
         >
@@ -83,7 +83,7 @@ export function NoteEditor({ note, isOpen, onClose }: NoteEditorProps) {
           placeholder="Title"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          className="mb-3 text-lg font-semibold border-blue-200 focus:border-blue-400 focus:ring-blue-400/20 placeholder:text-gray-400"
+          className="mb-3 text-lg font-semibold border-border focus:border-ring focus:ring-ring/20 placeholder:text-muted-foreground"
         />
 
         {/* Content textarea */}
@@ -92,21 +92,21 @@ export function NoteEditor({ note, isOpen, onClose }: NoteEditorProps) {
           placeholder="Write something..."
           value={content}
           onChange={(e) => setContent(e.target.value)}
-          className="min-h-[160px] resize-none border-blue-200 focus:border-blue-400 focus:ring-blue-400/20 leading-relaxed placeholder:text-gray-400"
+          className="min-h-[160px] resize-none border-border focus:border-ring focus:ring-ring/20 leading-relaxed placeholder:text-muted-foreground"
           autoFocus
         />
 
         {/* Error message */}
-        {error && <div className="mt-3 text-xs text-red-600">{error}</div>}
+        {error && <div className="mt-3 text-xs text-destructive">{error}</div>}
 
         {/* Action buttons */}
         <div className="flex justify-between items-center mt-6">
-          <div className="text-xs text-gray-500">
-            <kbd className="px-2 py-1 bg-gray-100 rounded text-xs font-mono">
+          <div className="text-xs text-muted-foreground">
+            <kbd className="px-2 py-1 bg-muted rounded text-xs font-mono">
               Ctrl
             </kbd>
             <span className="mx-1">+</span>
-            <kbd className="px-2 py-1 bg-gray-100 rounded text-xs font-mono">
+            <kbd className="px-2 py-1 bg-muted rounded text-xs font-mono">
               Enter
             </kbd>
             <span className="ml-1">to save</span>
@@ -114,7 +114,7 @@ export function NoteEditor({ note, isOpen, onClose }: NoteEditorProps) {
           <Button
             onClick={handleSave}
             disabled={!content.trim() || saving}
-            className="bg-gradient-to-r from-blue-500 to-green-500 hover:from-blue-600 hover:to-green-600 text-white shadow-sm px-6"
+            className="gradient-primary hover:opacity-90 text-white shadow-lg hover:shadow-xl px-6 transition-all duration-300"
             size="sm"
             aria-label="Save"
           >

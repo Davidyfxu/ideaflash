@@ -8,24 +8,37 @@
     "Roboto", "Inter", "Poppins", "Noto Sans SC", "PingFang SC", sans-serif;
 }
 
-/* 简化的主题颜色变量 */
+/* Aqua Dream theme color variables */
 :root {
-  --background: 210 40% 98%;
-  --foreground: 220 10% 20%;
-  --popover: 0 0% 100%;
-  --popover-foreground: 220 10% 20%;
-  --primary: 200 80% 60%;
+  --background: 0 0% 100%; /* Pure white background */
+  --foreground: 240 35% 20%; /* Dark blue-gray text */
+  --popover: 0 0% 100%; /* White popover background */
+  --popover-foreground: 240 35% 20%;
+  --primary: 216 100% 62%; /* #3F8EFC - Bright blue primary */
   --primary-foreground: 0 0% 100%;
-  --secondary: 160 60% 70%;
-  --secondary-foreground: 220 10% 20%;
-  --muted: 200 20% 95%;
-  --muted-foreground: 220 10% 40%;
-  --accent: 160 40% 90%;
-  --accent-foreground: 220 10% 20%;
+  --secondary: 228 100% 59%; /* #2667FF - Deep blue secondary */
+  --secondary-foreground: 0 0% 100%;
+  --muted: 214 100% 95%; /* Very light blue muted */
+  --muted-foreground: 240 20% 45%;
+  --accent: 214 100% 91%; /* Light blue accent (#ADD7F6 area) */
+  --accent-foreground: 240 35% 20%;
   --destructive: 0 85% 60%;
   --destructive-foreground: 0 0% 100%;
-  --border: 200 20% 85%;
-  --input: 200 20% 85%;
-  --ring: 200 80% 60%;
+  --border: 214 50% 90%; /* Light blue border */
+  --input: 214 100% 98%; /* Almost white with hint of blue */
+  --ring: 216 100% 62%; /* Focus ring - primary color */
   --radius: 0.5rem;
+}
+
+/* Custom gradient classes for Aqua Dream theme */
+.gradient-primary {
+  background: linear-gradient(135deg, #87bfff 0%, #3f8efc 50%, #2667ff 100%);
+}
+
+.gradient-secondary {
+  background: linear-gradient(135deg, #add7f6 0%, #87bfff 100%);
+}
+
+.gradient-accent {
+  background: linear-gradient(135deg, #3f8efc 0%, #3b28cc 100%);
 }
