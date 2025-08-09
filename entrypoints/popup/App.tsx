@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Save, Sparkles, History, CheckCircle } from "lucide-react";
+import { Save, Sparkles, History, CheckCircle, Cloud } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -19,22 +19,91 @@ function App() {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editingNote, setEditingNote] = useState<Note | undefined>();
   const [isInitialized, setIsInitialized] = useState(false);
+  const [draftSaving, setDraftSaving] = useState(false);
 
-  const { addNote, loadNotes, error } = useNotesStore();
+  const {
+    addNote,
+    loadNotes,
+    error,
+    updateDraft,
+    saveDraft,
+    loadDraft,
+    clearDraft,
+    getDraft,
+  } = useNotesStore();
   // Load notes from the store
   const initializeApp = async () => {
     try {
       await Promise.all([loadNotes()]);
+      // Load any existing draft
+      loadDraft();
       setIsInitialized(true);
     } catch (error) {
       console.error("Failed to initialize app:", error);
       setIsInitialized(true);
     }
   };
+
   // Initialize the app
   useEffect(() => {
     void initializeApp();
-  }, [loadNotes]);
+  }, [loadNotes, loadDraft]);
+
+  // Load draft content when component mounts
+  useEffect(() => {
+    if (isInitialized) {
+      const draft = getDraft();
+      if (draft.content || draft.title) {
+        setTitle(draft.title);
+        setContent(draft.content);
+      }
+    }
+  }, [isInitialized, getDraft]);
+
+  // Auto-save draft when content changes
+  useEffect(() => {
+    if (isInitialized && (title || content)) {
+      setDraftSaving(true);
+      const timeoutId = setTimeout(() => {
+        updateDraft(title, content);
+        setDraftSaving(false);
+      }, 500); // Debounce for 500ms
+
+      return () => {
+        clearTimeout(timeoutId);
+        setDraftSaving(false);
+      };
+    }
+  }, [title, content, isInitialized, updateDraft]);
+
+  // Auto-save draft when window/popup is about to close
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (content.trim() && !isSaving) {
+        // If there's unsaved content, save it as draft
+        updateDraft(title, content);
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.hidden && content.trim() && !isSaving) {
+        // When popup becomes hidden, save draft
+        updateDraft(title, content);
+      }
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      // Final attempt to save draft when component unmounts
+      if (content.trim() && !isSaving) {
+        updateDraft(title, content);
+      }
+    };
+  }, [title, content, isSaving, updateDraft]);
 
   const handleSave = async () => {
     if (!content.trim()) return;
@@ -51,6 +120,9 @@ function App() {
       // Clear form after saving
       setTitle("");
       setContent("");
+
+      // Clear the draft since we've saved the note
+      clearDraft();
 
       // Show success animation
       setShowSuccess(true);
@@ -172,7 +244,7 @@ function App() {
                 }}
                 className="text-green-700 font-semibold text-lg bg-white/90 backdrop-blur-sm px-4 py-2 rounded-full shadow-lg"
               >
-                ✨ Idea saved successfully!
+                Saved!
               </motion.p>
             </motion.div>
           </motion.div>
@@ -202,6 +274,17 @@ function App() {
             <Sparkles className="h-4 w-4 text-white" />
           </motion.div>
           <h1 className="text-lg font-bold text-gray-900">IdeaFlash</h1>
+          {draftSaving && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              className="flex items-center gap-1 text-xs text-blue-500 bg-blue-50 px-2 py-1 rounded-full"
+            >
+              <Cloud className="h-3 w-3 animate-pulse" />
+              <span>Auto-saving</span>
+            </motion.div>
+          )}
         </div>
 
         <div className="flex items-center gap-2">
@@ -209,10 +292,10 @@ function App() {
             onClick={() => setSearchDialogOpen(true)}
             size="sm"
             variant="outline"
-            className="gap-1.5 border-blue-200 hover:bg-blue-50 hover:border-blue-300"
+            className="border-blue-200 hover:bg-blue-50 hover:border-blue-300 p-2"
+            aria-label="View History"
           >
             <History className="h-4 w-4" />
-            <span>History</span>
           </Button>
         </div>
       </motion.header>
@@ -232,7 +315,7 @@ function App() {
           transition={{ delay: 0.2 }}
         >
           <Input
-            placeholder="💡 Give your idea a title..."
+            placeholder="Title (optional)"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             className="font-medium border-blue-200 focus:border-blue-400 focus:ring-blue-400/20 placeholder:text-gray-400"
@@ -247,7 +330,7 @@ function App() {
           className="flex-1"
         >
           <Textarea
-            placeholder="✨ Write your thoughts here..."
+            placeholder="Write your thoughts..."
             value={content}
             onChange={(e) => setContent(e.target.value)}
             className="min-h-[200px] resize-none border-blue-200 focus:border-blue-400 focus:ring-blue-400/20 leading-relaxed placeholder:text-gray-400"
@@ -275,7 +358,7 @@ function App() {
               size="lg"
             >
               <Save className="h-4 w-4 mr-2" />
-              {isSaving ? "Saving..." : "Save Idea"}
+              {isSaving ? "Saving..." : "Save"}
             </Button>
           </motion.div>
         </motion.div>
@@ -285,9 +368,18 @@ function App() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.6 }}
-          className="text-xs text-gray-600 text-center bg-blue-50/50 p-2 rounded-lg"
+          className="text-xs text-gray-500 text-center bg-gradient-to-r from-blue-50/50 to-green-50/50 p-3 rounded-xl border border-blue-100/50"
         >
-          💡 Tip: Press Ctrl+Enter to save quickly
+          <div className="flex items-center justify-center gap-2">
+            <kbd className="px-2 py-1 bg-white rounded-md shadow-sm text-xs font-mono border">
+              Ctrl
+            </kbd>
+            <span>+</span>
+            <kbd className="px-2 py-1 bg-white rounded-md shadow-sm text-xs font-mono border">
+              Enter
+            </kbd>
+            <span className="ml-2">to save</span>
+          </div>
         </motion.div>
       </motion.main>
 

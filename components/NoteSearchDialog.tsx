@@ -90,7 +90,8 @@ export function NoteSearchDialog({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="w-full max-w-3xl mx-auto max-h-[90vh] flex flex-col">
         <DialogHeader className="flex-shrink-0">
-          <DialogTitle className="text-center text-xl font-bold">
+          <DialogTitle className="flex items-center justify-center gap-2 text-xl font-bold">
+            <Clock className="h-5 w-5" />
             History
           </DialogTitle>
         </DialogHeader>
@@ -101,7 +102,7 @@ export function NoteSearchDialog({
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input
-                placeholder="Search..."
+                placeholder="Search notes..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"

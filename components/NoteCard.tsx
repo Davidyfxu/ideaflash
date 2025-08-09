@@ -33,7 +33,7 @@ export function NoteCard({ note, onEdit, onDelete }: NoteCardProps) {
   };
 
   const handleDelete = () => {
-    if (window.confirm("Delete this note?")) {
+    if (window.confirm("Delete note?")) {
       onDelete(note.idea_flash_id);
     }
   };
@@ -44,15 +44,17 @@ export function NoteCard({ note, onEdit, onDelete }: NoteCardProps) {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
       whileHover={{ scale: 1.01 }}
-      className="bg-white rounded-lg border border-gray-200 p-3 hover:shadow-md transition-all duration-200"
+      className="bg-white rounded-xl border border-gray-200 p-4 hover:shadow-md transition-all duration-200 hover:border-blue-300"
     >
       {/* Header */}
       <div className="flex items-start justify-between mb-2">
         <div className="flex-1 min-w-0">
-          <h3 className="font-medium text-gray-900 truncate text-sm">
-            {note.title || "Untitled"}
-          </h3>
-          <div className="flex items-center gap-1 mt-1 text-xs text-gray-500">
+          {note.title && (
+            <h3 className="font-medium text-gray-900 truncate text-sm mb-1">
+              {note.title}
+            </h3>
+          )}
+          <div className="flex items-center gap-1 text-xs text-gray-500">
             <Calendar className="h-3 w-3" />
             <span>{formatDate(note.created_at)}</span>
           </div>

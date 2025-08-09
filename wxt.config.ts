@@ -9,12 +9,12 @@ export default defineConfig({
     description:
       "A fast, lightweight Chrome extension for capturing spontaneous ideas and notes with local persistence",
     version: "1.0.1",
-    permissions: [],
+    permissions: ["storage"],
     commands: {
       "toggle-popup": {
         suggested_key: {
-          default: "Ctrl+Shift+Y",
-          mac: "Command+Shift+Y",
+          default: "Ctrl+Shift+I",
+          mac: "Command+Shift+I",
         },
         description: "Toggle IdeaFlash popup",
       },

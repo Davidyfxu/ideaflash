@@ -9,6 +9,12 @@ interface NotesStore {
   isLoading: boolean;
   error: string | null;
   searchTerm: string;
+  // Draft state
+  draft: {
+    title: string;
+    content: string;
+    lastSaved: number;
+  };
   // Actions
   loadNotes: () => Promise<void>;
   addNote: (
@@ -19,6 +25,12 @@ interface NotesStore {
   searchNotes: (term: string) => void;
   clearFilters: () => void;
   clearError: () => void;
+  // Draft actions
+  updateDraft: (title: string, content: string) => void;
+  saveDraft: () => Promise<void>;
+  loadDraft: () => void;
+  clearDraft: () => void;
+  getDraft: () => { title: string; content: string; lastSaved: number };
 }
 
 export const useNotesStore = create<NotesStore>((set, get) => ({
@@ -26,6 +38,11 @@ export const useNotesStore = create<NotesStore>((set, get) => ({
   isLoading: false,
   error: null,
   searchTerm: "",
+  draft: {
+    title: "",
+    content: "",
+    lastSaved: 0,
+  },
 
   loadNotes: async () => {
     set({ isLoading: true, error: null });
@@ -60,7 +77,7 @@ export const useNotesStore = create<NotesStore>((set, get) => ({
         ...noteData,
         idea_flash_id: ideaFlashId,
       };
-      
+
       // 保存到本地数据库
       const newNote = await database.addNote(params);
       const currentNotes = get().notes;
@@ -146,4 +163,69 @@ export const useNotesStore = create<NotesStore>((set, get) => ({
     set({ error: null });
   },
 
+  // Draft management functions
+  updateDraft: (title: string, content: string) => {
+    const draft = {
+      title,
+      content,
+      lastSaved: Date.now(),
+    };
+    set({ draft });
+    // Save to local storage for persistence
+    try {
+      localStorage.setItem("ideaflash_draft", JSON.stringify(draft));
+    } catch (error) {
+      console.warn("Failed to save draft to storage:", error);
+    }
+  },
+
+  saveDraft: async () => {
+    const { draft } = get();
+    if (!draft.content.trim()) return;
+
+    try {
+      // Save the draft as a regular note
+      await get().addNote({
+        title:
+          draft.title.trim() || draft.content.split("\n")[0].substring(0, 50),
+        content: draft.content.trim(),
+      });
+
+      // Clear the draft after saving
+      get().clearDraft();
+    } catch (error) {
+      console.error("Failed to save draft:", error);
+      throw error;
+    }
+  },
+
+  loadDraft: () => {
+    try {
+      const stored = localStorage.getItem("ideaflash_draft");
+      if (stored) {
+        const draft = JSON.parse(stored);
+        set({ draft });
+      }
+    } catch (error) {
+      console.warn("Failed to load draft from storage:", error);
+    }
+  },
+
+  clearDraft: () => {
+    const emptyDraft = {
+      title: "",
+      content: "",
+      lastSaved: 0,
+    };
+    set({ draft: emptyDraft });
+    try {
+      localStorage.removeItem("ideaflash_draft");
+    } catch (error) {
+      console.warn("Failed to clear draft from storage:", error);
+    }
+  },
+
+  getDraft: () => {
+    return get().draft;
+  },
 }));

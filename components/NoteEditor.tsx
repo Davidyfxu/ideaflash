@@ -99,20 +99,31 @@ export function NoteEditor({ note, isOpen, onClose }: NoteEditorProps) {
         {/* Error message */}
         {error && <div className="mt-3 text-xs text-red-600">{error}</div>}
 
-        {/* Save button */}
-        <div className="flex justify-end mt-6">
+        {/* Action buttons */}
+        <div className="flex justify-between items-center mt-6">
+          <div className="text-xs text-gray-500">
+            <kbd className="px-2 py-1 bg-gray-100 rounded text-xs font-mono">
+              Ctrl
+            </kbd>
+            <span className="mx-1">+</span>
+            <kbd className="px-2 py-1 bg-gray-100 rounded text-xs font-mono">
+              Enter
+            </kbd>
+            <span className="ml-1">to save</span>
+          </div>
           <Button
             onClick={handleSave}
             disabled={!content.trim() || saving}
-            className="bg-gradient-to-r from-blue-500 to-green-500 hover:from-blue-600 hover:to-green-600 text-white shadow-sm"
-            size="lg"
+            className="bg-gradient-to-r from-blue-500 to-green-500 hover:from-blue-600 hover:to-green-600 text-white shadow-sm px-6"
+            size="sm"
             aria-label="Save"
           >
             {saving ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <Loader2 className="h-4 w-4 animate-spin mr-2" />
             ) : (
-              <Save className="h-4 w-4" />
+              <Save className="h-4 w-4 mr-2" />
             )}
+            Save
           </Button>
         </div>
       </div>
