@@ -363,12 +363,12 @@ function App() {
           </motion.div>
         </motion.div>
 
-        {/* Keyboard shortcut hint */}
+        {/* Keyboard shortcut hints */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.6 }}
-          className="text-xs text-gray-500 text-center bg-gradient-to-r from-blue-50/50 to-green-50/50 p-3 rounded-xl border border-blue-100/50"
+          className="text-xs text-gray-500 text-center bg-gradient-to-r from-blue-50/50 to-green-50/50 p-3 rounded-xl border border-blue-100/50 space-y-2"
         >
           <div className="flex items-center justify-center gap-2">
             <kbd className="px-2 py-1 bg-white rounded-md shadow-sm text-xs font-mono border">
@@ -379,6 +379,20 @@ function App() {
               Enter
             </kbd>
             <span className="ml-2">to save</span>
+          </div>
+          <div className="flex items-center justify-center gap-2 text-gray-400">
+            <kbd className="px-2 py-1 bg-white rounded-md shadow-sm text-xs font-mono border">
+              Ctrl
+            </kbd>
+            <span>+</span>
+            <kbd className="px-2 py-1 bg-white rounded-md shadow-sm text-xs font-mono border">
+              Shift
+            </kbd>
+            <span>+</span>
+            <kbd className="px-2 py-1 bg-white rounded-md shadow-sm text-xs font-mono border">
+              I
+            </kbd>
+            <span className="ml-2">to toggle</span>
           </div>
         </motion.div>
       </motion.main>
