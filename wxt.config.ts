@@ -5,11 +5,11 @@ export default defineConfig({
   modules: ["@wxt-dev/module-react", "@wxt-dev/auto-icons"],
 
   manifest: {
-    name: "IdeaFlash",
+    name: "Idea Flash - Quick Notes Capturing And AI Generation",
     description:
-      "A fast, lightweight Chrome extension for capturing spontaneous ideas and notes with local persistence",
-    version: "1.0.1",
-    permissions: ["storage"],
+      "A fast, lightweight AI notes extension for capturing spontaneous ideas and notes with local persistence",
+    version: "1.1.3",
+    permissions: [],
     commands: {
       "toggle-popup": {
         suggested_key: {
@@ -20,7 +20,7 @@ export default defineConfig({
       },
     },
     action: {
-      default_title: "IdeaFlash - Quick Note Taking",
+      default_title: "Idea Flash - Quick Notes Capturing And AI Generation",
       default_popup: "popup.html",
     },
     autoIcons: {

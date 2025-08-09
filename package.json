@@ -1,8 +1,8 @@
 {
   "name": "idea-flash",
-  "description": "A fast, lightweight Chrome extension for capturing spontaneous ideas and notes with local persistence",
+  "description": "A fast, lightweight AI notes extension for capturing spontaneous ideas and notes with local persistence",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.2.3",
   "type": "module",
   "scripts": {
     "dev": "wxt",
